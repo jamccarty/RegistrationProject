@@ -79,7 +79,6 @@ def classQ(studentPrefsFile, numClasses):
         c.preferredStudents = pref
         mostPreferred.append(c)
 
-    # mostPreferred is a linked list and students is an array
     return mostPreferred, students
 
 def roomQ(rooms):
