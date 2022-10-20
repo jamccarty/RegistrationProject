@@ -1,6 +1,5 @@
 import re
 from re import S
-import queue
 
 class LinkedList:
     class Node:
