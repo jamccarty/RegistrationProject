@@ -56,7 +56,7 @@ def classQ(studentPrefsFile, numClasses):
 
     return mostPreferredClasses, students
 
-def mergeSort(arr):
+def mergeSort(arr, dir):
     if len(arr) > 1:
  
          # Finding the mid of the array
@@ -69,21 +69,29 @@ def mergeSort(arr):
         R = arr[mid:]
  
         # Sorting the first half
-        mergeSort(L)
+        mergeSort(L, dir)
  
         # Sorting the second half
-        mergeSort(R)
+        mergeSort(R, dir)
  
         i = j = k = 0
  
         # Copy data to temp arrays L[] and R[]
         while i < len(L) and j < len(R):
-            if L[i] <= R[j]:
-                arr[k] = L[i]
-                i += 1
-            else:
-                arr[k] = R[j]
-                j += 1
+            if(dir==0):
+                if L[i] > R[j]:
+                    arr[k] = L[i]
+                    i += 1
+                else:
+                    arr[k] = R[j]
+                    j += 1
+            elif(dir==1):
+                if L[i] <= R[j]:
+                    arr[k] = L[i]
+                    i += 1
+                else:
+                    arr[k] = R[j]
+                    j += 1
             k += 1
  
         # Checking if any element was left
@@ -111,7 +119,7 @@ if __name__ == '__main__':
     arr = [12, 11, 13, 5, 6, 7]
     print("Given array is", end="\n")
     printList(arr)
-    mergeSort(arr)
+    mergeSort(arr,1)
     print("Sorted array is: ", end="\n")
     printList(arr)
 
