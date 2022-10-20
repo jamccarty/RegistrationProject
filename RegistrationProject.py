@@ -33,6 +33,8 @@ class LinkedList:
         n = self.head
         self.head = n.next
         return n
+    def isEmpty(self):
+        return self.head.next is None
 
 class Class:
     def __init__(self, class_name):
@@ -77,6 +79,7 @@ def classQ(studentPrefsFile, numClasses):
         c.preferredStudents = pref
         mostPreferred.append(c)
 
+    # mostPreferred is a linked list and students is an array
     return mostPreferred, students
 
 def roomQ(rooms):
@@ -139,22 +142,31 @@ def mergeSort(arr, dir):
             j += 1
             k += 1
  
-def mainFor(maxRoomSize, T, classRankPriorityList, classProf, preferredStudents):
+def classSchedule(rooms, T, classes, classProf, students_filename):
+    # initialize preferred students and class ranked lists
+    classRanks, studentPref = classQ(students_filename, classes) 
+    #initialize the list of rooms
+    maxRoomSize = roomQ(rooms)
+    globalStudentCount = 0
+
+    # innit professors and student's schedules
+
     holdClass = []
     for room in maxRoomSize:
         for time in T:
-            if classRankPriorityList.empty():
+            if classRanks.isEmpty():
                 return globalStudentCount
-            clss = classRankPriorityList.extractFront()
+            clss = classRanks.popFront()
             while classProf[clss].conflicts(T):
-                holdClass.add(clss)
-                clss = classRankPriorityList.extractFront()
+                holdClass.append(clss)
+                clss = classRanks.popFront()
             for item in holdClass:
-                classRankPriorityList.add(item)
+                classRanks.append(item)
             prof = classProf[clss]
-            prof.schedule.add(ts)
-            while(clss.notFull & (not preferredStudents.isEmpty())):
-                x = preferredStudents.extractFront()
+            # TODO: this, notFull, and whatever is going on in the while loop below
+            prof.schedule.append(time) 
+            while(clss.notFull and (studentPref.isEmpty())):
+                x = studentPref.popFront()
                 if(not x.timeConflict):
                     students.append(x)
                     globalStudentCount+=1
