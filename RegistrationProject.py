@@ -1,5 +1,5 @@
 import re
-from re import S
+from re import S, X
 
 class LinkedList:
     class Node:
@@ -145,6 +145,16 @@ def classQ(studentPrefsFile, numClasses):
 
     return mostPreferred, students
 
+def roomQ(rooms):
+    # input: list of rooms - [size, room #] (tuple)
+    sorted_rooms = mergeSort(rooms, 0)
+    ret_list = LinkedList()
+
+    for i in range(len(sorted_rooms)):
+        ret_list.append(sorted_rooms[i])
+
+    return ret_list
+
 #0 is greatest -> least, 1 is least -> greatest
 def mergeSort(arr, dir):
     if len(arr) > 1:
@@ -195,9 +205,28 @@ def mergeSort(arr, dir):
             j += 1
             k += 1
  
+def mainFor(maxRoomSize, T, classRankPriorityList, classProf, preferredStudents):
+    holdClass = []
+    for room in maxRoomSize:
+        for time in T:
+            if classRankPriorityList.empty():
+                return globalStudentCount
+            clss = classRankPriorityList.extractFront()
+            while classProf[clss].conflicts(T):
+                holdClass.add(clss)
+                clss = classRankPriorityList.extractFront()
+            for item in holdClass:
+                classRankPriorityList.add(item)
+            prof = classProf[clss]
+            prof.schedule.add(ts)
+            while(clss.notFull & (not preferredStudents.isEmpty())):
+                x = preferredStudents.extractFront()
+                if(not x.timeConflict):
+                    students.append(x)
+                    globalStudentCount+=1
+            studentPreferenceCount = globalStudentCount / 4
+            print(studentPreferenceCount)
 # Code to print the list
- 
- 
 def printList(arr):
     for i in range(len(arr)):
         print(arr[i], end=" ")
@@ -213,7 +242,7 @@ if __name__ == '__main__':
     print("Sorted array is: ", end="\n")
     printList(arr)
 
-stud = open("../basic/demo_studentprefs.txt")
+stud = open("demo_studentprefs.txt")
 li, s = classQ(stud, 14)
 
 times, rooms, classes, teachers = parseConstraints("../basic/demo_constraints.txt")
