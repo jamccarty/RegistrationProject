@@ -214,7 +214,15 @@ def classSchedule(rooms, T, classes, classProf, students_filename):
     maxRoomSize = roomQ(rooms)
     globalStudentCount = 0
 
-    # innit professors and student's schedules
+    # innit professors 
+    profSchedule = []
+    for i in range(len(classProf)):
+        profSchedule.append([])
+
+    # innit student's schedules
+    studentSchedules = []
+    for i in range(len(studentPref)):
+        studentSchedules.append([])
 
     holdClass = []
     for room in maxRoomSize:
