@@ -29,6 +29,7 @@ class Class:
         self.enrolled = []
         self.professor = -1
         self.time = -1
+        self.preferredStudents = 0
 
 def classQ(studentPrefsFile, numClasses):
     mostPreferredClasses = []
@@ -49,13 +50,21 @@ def classQ(studentPrefsFile, numClasses):
 
     for student in students:
         for pref in student:
-            mostPreferredClasses += 1
+            mostPreferredClasses[int(pref)] == (mostPreferredClasses[int(pref)] + 1, int(pref))
 
-    mergeSort(mostPreferredClasses)
-    #merge sort mostPreferredClasses and add to linked list (will make O(1) removal/re-adding sections when conflicts)
+    mergeSort(mostPreferredClasses, 1)
+    mostPreferred = LinkedList()
+    #merge sort mostPreferredClasses and add to linked list 
+    #(will make O(1) removal/re-adding sections when conflicts)
 
-    return mostPreferredClasses, students
+    for (pref, id) in mostPreferredClasses:
+        c = Class(id)
+        c.preferredStudents = pref
+        mostPreferred.append(c)
 
+    return mostPreferred, students
+    
+#0 is greatest -> least, 1 is least -> greatest
 def mergeSort(arr, dir):
     if len(arr) > 1:
  
