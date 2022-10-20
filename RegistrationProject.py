@@ -45,7 +45,70 @@ class Class:
     def __str__(self):
         return f"{self.name}"
 
+# parses contents of constraints.txt
+# params:
+#   file location 
+# returns 
+#   number of time slots (integer)
+#   rooms (array of 2-tuples (roomsize, room number)), 
+#   array of professors indexed by class they teach (size is number of classes)
+def parseConstraints(filename):
+    # open file, split by line
+    file = open(filename)
+    txt = file.read()
+    lines = txt.split('\n')
+
+    # loc is current line number in file. tracks location in file
+    loc = 0
+
+    # x will hold parsed, string contents of file. 
+    # variable names are always separated from values by \t
+    x = lines[loc].split('\t')
+    numTimeSlots = int(x[1]) # first line is number of time slots
+
+    # parse next line
+    loc += 1
+    x = lines[loc].split('\t')
+    numRooms = int(x[1]) #number of rooms total
+    rooms = []
+
+    # initialize rooms array -- array of tuples (room size, room id)
+    # (this is so that after merge sorting, each size remains paired with correct room id)
+    for line in lines[2:2 + numRooms]:
+        x = line.split('\t')
+        rooms.append((int(x[1]), int(x[0])))
+        loc += 1
+    
+    # split next line after rooms to get number of classes
+    loc += 1
+    x = lines[loc].split('\t')
+    numClasses = int(x[1])
+    
+    # split next line to get number of class teachers.
+    # we can discard this -- just half number of classes
+    loc += 1
+    x = lines[loc].split('\t')
+    classTeachers = [] # array of classes indexed by professor (first is 0)
+
+    # adding correct professor for each class
+    for i in range(numClasses):
+        loc += 1
+        tc = lines[loc].split('\t')
+        classTeachers.append(int(tc[1]))
+
+    file.close() #close file
+    return numTimeSlots, rooms, classTeachers
+    
+# 
+# params
+#   FILE OBJECT of studentprefs.txt
+#   number of classes as input
+# returns
+#   mostPreferred -- LinkedList of classes organized in descending order by how preferred they are
+#   students -- array of arrays. Outer array is indexed by student id, inner arrays are student preference lists
 def classQ(studentPrefsFile, numClasses):
+    # array of tuples for merge sort reasons --> will turn into LinkedList() later
+    # will be organized (preference level of class, class id)
     mostPreferredClasses = []
 
     for i in range(numClasses):
@@ -53,25 +116,28 @@ def classQ(studentPrefsFile, numClasses):
 
     string = studentPrefsFile.read()
     lines = string.split('\n')
-    lines = lines[1:]
+    lines = lines[1:] #skip first line
 
     students = []
 
+    # fill students
     for line in lines:
         line = re.sub('[ \t]+', ' ', line)
         pref = line.split(' ')[1:]
         prefno = [int(p) for p in pref]
         students.append(prefno)
 
+    # for each class in each student preference list, increment that classes preference level
     for student in students:
         for pref in student:
             mostPreferredClasses[pref-1] = (mostPreferredClasses[pref - 1][0] + 1, pref)
 
+    # mergeSort the classes based on preference level
     mergeSort(mostPreferredClasses, 1)
-    mostPreferred = LinkedList()
-    #merge sort mostPreferredClasses and add to linked list 
-    #(will make O(1) removal/re-adding sections when conflicts)
 
+    # turn mostPreferredClasses array from an array of tuples to a linked list of Class() objects
+    #(will make O(1) removal/re-adding sections when conflicts)
+    mostPreferred = LinkedList()
     for (pref, id) in mostPreferredClasses:
         c = Class(id)
         c.preferredStudents = pref
@@ -149,5 +215,11 @@ if __name__ == '__main__':
 
 stud = open("../basic/demo_studentprefs.txt")
 li, s = classQ(stud, 14)
+
+times, rooms, classes, teachers = parseConstraints("../basic/demo_constraints.txt")
+print(f"class times: {times}")
+print(f"rooms: {rooms}")
+print(f"number of classes: {classes}")
+print(f"teachers list: {teachers}")
 
 
