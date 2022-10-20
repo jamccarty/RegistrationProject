@@ -1,5 +1,5 @@
 import re
-from re import S
+from re import S, X
 
 class LinkedList:
     class Node:
@@ -129,6 +129,27 @@ def mergeSort(arr, dir):
             j += 1
             k += 1
  
+def mainFor(maxRoomSize, T, classRankPriorityList, classProf, preferredStudents):
+    holdClass = []
+    for room in maxRoomSize:
+        for time in T:
+            if classRankPriorityList.empty():
+                return globalStudentCount
+            clss = classRankPriorityList.extractFront()
+            while classProf[clss].conflicts(T):
+                holdClass.add(clss)
+                clss = classRankPriorityList.extractFront()
+            for item in holdClass:
+                classRankPriorityList.add(item)
+            prof = classProf[clss]
+            prof.schedule.add(ts)
+            while(clss.notFull & (not preferredStudents.isEmpty())):
+                x = preferredStudents.extractFront()
+                if(not x.timeConflict):
+                    students.append(x)
+                    globalStudentCount+=1
+            studentPreferenceCount = globalStudentCount / 4
+            print(studentPreferenceCount)
 # Code to print the list
  
  
