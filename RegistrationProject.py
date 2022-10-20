@@ -176,7 +176,7 @@ if __name__ == '__main__':
     print("Sorted array is: ", end="\n")
     printList(arr)
 
-stud = open("../basic/demo_studentprefs.txt")
+stud = open("demo_studentprefs.txt")
 li, s = classQ(stud, 14)
 
 
