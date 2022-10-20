@@ -10,6 +10,16 @@ class LinkedList:
     def __init__(self):
         self.head = None
 
+    def __str__(self) -> str:
+        s = ""
+        loc = self.head
+
+        while loc != None:
+            s += f" -> {loc.data}"
+            loc = loc.next
+        
+        return s
+
     def append(self, data):
         n = self.Node(data)
 
@@ -17,6 +27,7 @@ class LinkedList:
             self.head = n
         else:
             n.next = self.head
+            self.head = n
 
     def popFront(self):
         n = self.head
@@ -31,11 +42,14 @@ class Class:
         self.time = -1
         self.preferredStudents = 0
 
+    def __str__(self):
+        return f"{self.name}"
+
 def classQ(studentPrefsFile, numClasses):
     mostPreferredClasses = []
 
     for i in range(numClasses):
-        mostPreferredClasses.append(0)
+        mostPreferredClasses.append((0, i))
 
     string = studentPrefsFile.read()
     lines = string.split('\n')
@@ -45,12 +59,13 @@ def classQ(studentPrefsFile, numClasses):
 
     for line in lines:
         line = re.sub('[ \t]+', ' ', line)
-        pref = line.split(' ')[:1]
-        students.append(pref)
+        pref = line.split(' ')[1:]
+        prefno = [int(p) for p in pref]
+        students.append(prefno)
 
     for student in students:
         for pref in student:
-            mostPreferredClasses[int(pref)] == (mostPreferredClasses[int(pref)] + 1, int(pref))
+            mostPreferredClasses[pref-1] = (mostPreferredClasses[pref - 1][0] + 1, pref)
 
     mergeSort(mostPreferredClasses, 1)
     mostPreferred = LinkedList()
@@ -63,7 +78,7 @@ def classQ(studentPrefsFile, numClasses):
         mostPreferred.append(c)
 
     return mostPreferred, students
-    
+
 #0 is greatest -> least, 1 is least -> greatest
 def mergeSort(arr, dir):
     if len(arr) > 1:
@@ -131,5 +146,8 @@ if __name__ == '__main__':
     mergeSort(arr,1)
     print("Sorted array is: ", end="\n")
     printList(arr)
+
+stud = open("../basic/demo_studentprefs.txt")
+li, s = classQ(stud, 14)
 
 
