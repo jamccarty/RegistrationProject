@@ -2,27 +2,26 @@ import re
 from re import S
 
 class LinkedList:
-    def __init__(self):
-        self.head = None
-
-    def append(self, data):
-        n = Node(data)
-
-        if self.head == None:
-            self.head = n
-        else:
-            n.next = head
-
-    def popFront(self):
-        n = self.head
-        self.head = n.next
-        return n
-
     class Node:
         def __init__(self, data):
             self.data = data
             self.next = None
 
+    def __init__(self):
+        self.head = None
+
+    def append(self, data):
+        n = self.Node(data)
+
+        if self.head == None:
+            self.head = n
+        else:
+            n.next = self.head
+
+    def popFront(self):
+        n = self.head
+        self.head = n.next
+        return n
 
 class Class:
     def __init__(self, class_name):
@@ -52,6 +51,7 @@ def classQ(studentPrefsFile, numClasses):
         for pref in student:
             mostPreferredClasses += 1
 
+    mergeSort(mostPreferredClasses)
     #merge sort mostPreferredClasses and add to linked list (will make O(1) removal/re-adding sections when conflicts)
 
     return mostPreferredClasses, students
