@@ -79,6 +79,16 @@ def classQ(studentPrefsFile, numClasses):
 
     return mostPreferred, students
 
+def roomQ(rooms):
+    # input: list of rooms - [size, room #] (tuple)
+    sorted_rooms = mergeSort(rooms, 0)
+    ret_list = LinkedList()
+
+    for i in range(len(sorted_rooms)):
+        ret_list.append(sorted_rooms[i])
+
+    return ret_list
+
 #0 is greatest -> least, 1 is least -> greatest
 def mergeSort(arr, dir):
     if len(arr) > 1:
@@ -151,8 +161,6 @@ def mainFor(maxRoomSize, T, classRankPriorityList, classProf, preferredStudents)
             studentPreferenceCount = globalStudentCount / 4
             print(studentPreferenceCount)
 # Code to print the list
- 
- 
 def printList(arr):
     for i in range(len(arr)):
         print(arr[i], end=" ")
