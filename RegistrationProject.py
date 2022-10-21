@@ -207,7 +207,9 @@ def mergeSort(arr, dir):
             j += 1
             k += 1
  
-def classSchedule(rooms, T, classes, classProf, students_filename):
+def classSchedule(filename, students_filename):
+    # parse contents to get time slots, rooms, and professors
+    timeslots, rooms, classProf = parseConstraints(filename)
     # initialize preferred students and class ranked lists
     classRanks, studentPref = classQ(students_filename, classes) 
     #initialize the list of rooms
@@ -226,22 +228,22 @@ def classSchedule(rooms, T, classes, classProf, students_filename):
 
     holdClass = []
     for room in maxRoomSize:
-        for time in T:
+        for time in timeslots:
             if classRanks.isEmpty():
                 return globalStudentCount
             clss = classRanks.popFront()
-            while classProf[clss].conflicts(T):
+            while classProf[clss].conflicts(timeslots):
                 holdClass.append(clss)
                 clss = classRanks.popFront()
             for item in holdClass:
                 classRanks.append(item)
             prof = classProf[clss]
-            # TODO: this, notFull, and whatever is going on in the while loop below
-            prof.schedule.append(time) 
+            # TODO: make studentPref into a LinkedList and clss.notFull thing
+            prof.schedule.append(time) #TODO 
             while(clss.notFull and (studentPref.isEmpty())):
                 x = studentPref.popFront()
                 if(not x.timeConflict):
-                    students.append(x)
+                    studentSchedules[].append(x) # TODO
                     globalStudentCount+=1
             studentPreferenceCount = globalStudentCount / 4
             print(studentPreferenceCount)
