@@ -204,9 +204,9 @@ def classQ(studentsFilename, numClasses):
             whoPrefers[pref].append(i)
 
     # mergeSort the classes based on preference level
-    # print(mostPreferredClasses)
+    # #print(mostPreferredClasses)
     mergeSort(mostPreferredClasses, 1)
-    # print(mostPreferredClasses)
+    # #print(mostPreferredClasses)
 
     # turn mostPreferredClasses array from an array of tuples to a linked list of Class() objects
     #(will make O(1) removal/re-adding sections when conflicts)
@@ -371,5 +371,4 @@ print(f"Time: {start} {end} {(end - start) / 1000}")
 schedule.to_csv("testSched.csv")
 print(enrolledStudentCount)
 print(maxPossibleStudentCount)
-
 
