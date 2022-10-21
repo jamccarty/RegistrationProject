@@ -225,7 +225,7 @@ def classSchedule(constraints_filename, students_filename):
 
     # innit professors 
     profSchedule = []
-    for i in range(len(classProf)):
+    for i in range(len(classTeachers)):
         profSchedule.append([])
 
     # innit student's schedules
@@ -235,16 +235,16 @@ def classSchedule(constraints_filename, students_filename):
 
     holdClass = []
     for room in maxRoomSize:
-        for time in timeslots:
+        for time in numTimeSlots:
             if classRanks.isEmpty():
                 return globalStudentCount
             clss = classRanks.popFront()
-            while classProf[clss].conflicts(timeslots):
+            while classTeachers[clss].conflicts(numTimeSlots):
                 holdClass.append(clss)
                 clss = classRanks.popFront()
             for item in holdClass:
                 classRanks.append(item)
-            prof = classProf[clss]
+            prof = classTeachers[clss]
             # TODO: make studentPref into a LinkedList and clss.notFull thing
             prof.schedule.append(time) #TODO 
             while(clss.notFull and (studentPref.isEmpty())):
@@ -278,5 +278,3 @@ print(f"class times: {times}")
 print(f"rooms: {rooms}")
 print(f"number of classes: {classes}")
 print(f"teachers list: {teachers}")
-
-
