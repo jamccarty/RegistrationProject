@@ -48,6 +48,10 @@ class LinkedList:
     def popFront(self):
         if self.head == None:
             return None
+        if self.head.next == None:
+            n = self.head
+            self.head = None
+            return n
         
         n = self.head
 
@@ -175,21 +179,30 @@ def classQ(studentsFilename, numClasses):
     lines = lines[1:] #skip first line
 
     students = []
-
+    students.append([]) #for 0 student
+    i = 0
     # fill students
     for line in lines:
-        line = re.sub('[ \t]+', ' ', line)
-        pref = line.split(' ')[1:]
-        # prefno = [int(p) for p in pref]
+        if line == "":
+            break
+        students.append([])
+        line = line.split('\t')[1] #isolate student preferences
+        pref = line.split(' ') #parse preferences
+        students[i] = [int(p) for p in pref] #convert preferences to integers
+        i += 1
 
     # for each class in each student preference list, increment that classes preference level
+    i = -1
     for student in students:
+        i += 1
         for pref in student:
             mostPreferredClasses[pref-1] = (mostPreferredClasses[pref - 1][0] + 1, pref)
-            whoPrefers[pref - 1].append(student)
+            whoPrefers[pref - 1].append(i)
 
     # mergeSort the classes based on preference level
+    print(mostPreferredClasses)
     mergeSort(mostPreferredClasses, 1)
+    print(mostPreferredClasses)
 
     # turn mostPreferredClasses array from an array of tuples to a linked list of Class() objects
     #(will make O(1) removal/re-adding sections when conflicts)
@@ -290,16 +303,24 @@ def classSchedule(constraints_filename, students_filename):
     for room in maxRoomSize:
         schedule.append([])
         for time in range(numTimeSlots):
-            print(f"{room}, {time}")
             if classRanks.isEmpty():
                 return schedule, globalStudentCount
 
             clss = classRanks.popFront().data
 
+            skipTime = False
             while profSchedules[classTeachers[clss.name]].contains(time):
-                print(f"Conflict: {clss.name} at time {time}")
+                # print(f"Conflict: {clss.name} at time {time}")
                 holdClass.append(clss)
                 clss = classRanks.popFront().data
+
+                if classRanks.isEmpty():
+                    skipTime = True
+                    break
+
+            if skipTime == True:
+                classRanks = holdClass
+                continue
 
             if not holdClass.isEmpty():
                 classRanks.merge(holdClass)
@@ -309,11 +330,14 @@ def classSchedule(constraints_filename, students_filename):
             # TODO: make studentPref into a LinkedList and clss.notFull thing
             profSchedules[clss.professor].append(time)
             while not room[0] == len(clss.enrolled) and not whoPrefers[clss.name].isEmpty():
-                x = whoPrefers[clss.name].popFront()
+                x = whoPrefers[clss.name].popFront().data
                 if(not studentSchedules[x].contains(time)):
                     clss.enrolled.append(x)
                     studentSchedules[x].append(x) # TODO
                     globalStudentCount+=1
+
+            print(f"Room: {room[1]} - Class {clss.name}, prof {clss.professor}, time {time}")
+                
 
     studentPreferenceCount = globalStudentCount / 4
     print(studentPreferenceCount)
