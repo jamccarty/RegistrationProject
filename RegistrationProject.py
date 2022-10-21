@@ -150,6 +150,12 @@ def classQ(studentsFilename, numClasses):
     file.close()
     return mostPreferred, students
 
+'''
+    Params: 
+        rooms -- an unsorted linked list of rooms and associated sizes (size, room #)
+    Returns: 
+        ret_list -- a linked list of rooms sorted in descending room size
+'''
 def roomQ(rooms):
     # input: list of rooms - [size, room #] (tuple)
     sorted_rooms = mergeSort(rooms, 0)
