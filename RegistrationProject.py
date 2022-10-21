@@ -1,3 +1,4 @@
+from email import header
 import re
 from re import S, X
 
@@ -45,8 +46,13 @@ class LinkedList:
             self.tail = n
 
     def popFront(self):
+        if self.head == None:
+            return None
+        
         n = self.head
-        self.head = n.next
+
+        if not n.next == None:
+            self.head = n.next
         return n
     
     # merge two linked lists so that A->B
@@ -56,16 +62,32 @@ class LinkedList:
         A.head = None
         self.tail = A.tail
 
+    def contains(self, data):
+        loc = self.head
+
+        while loc != None:
+            if loc.data == data:
+                return True
+            loc = loc.next
+        
+        return False
+
     def isEmpty(self):
-        return self.head.next is None
+        return self.head == None
 
 class Class:
+
     def __init__(self, class_name):
         self.name = class_name
         self.enrolled = []
         self.professor = -1
         self.time = -1
+        self.room = -1
+        self.roomSize = 0
         self.preferredStudents = 0
+    
+    def notFull(self):
+        return self.len(self.enrolled) - self.roomSize != 0
 
     def __str__(self):
         return f"{self.name}"
@@ -74,9 +96,9 @@ class Class:
 # params:
 #   file location 
 # returns 
-#   number of time slots (integer)
-#   rooms (array of 2-tuples (roomsize, room number)), 
-#   array of professors indexed by class they teach (size is number of classes)
+#   numTimeSlots -- number of time slots (integer)
+#   rooms -- array of 2-tuples (roomsize, room number)), 
+#   classTeachers -- array of professors indexed by class they teach (size is number of classes)
 def parseConstraints(filename):
     # open file, split by line
     file = open(filename)
@@ -114,6 +136,7 @@ def parseConstraints(filename):
     loc += 1
     x = lines[loc].split('\t')
     classTeachers = [] # array of classes indexed by professor (first is 0)
+    classTeachers.append(0) #there is no 0 class
 
     # adding correct professor for each class
     for i in range(numClasses):
@@ -131,13 +154,19 @@ def parseConstraints(filename):
 # returns
 #   mostPreferred -- LinkedList of classes organized in descending order by how preferred they are
 #   students -- array of arrays. Outer array is indexed by student id, inner arrays are student preference lists
+#   whoPrefers -- array of LinkedLists of students who prefer a class, indexed by class
 def classQ(studentsFilename, numClasses):
     # array of tuples for merge sort reasons --> will turn into LinkedList() later
     # will be organized (preference level of class, class id)
     mostPreferredClasses = []
 
+    #array of LinkedLists of all students who prefer class, indexed by class
+    whoPrefers = []
+    whoPrefers.append(LinkedList()) #append blank -- no class 0
+
     for i in range(numClasses):
         mostPreferredClasses.append((0, i))
+        whoPrefers.append(LinkedList())
 
     file = open(studentsFilename)
 
@@ -151,13 +180,13 @@ def classQ(studentsFilename, numClasses):
     for line in lines:
         line = re.sub('[ \t]+', ' ', line)
         pref = line.split(' ')[1:]
-        prefno = [int(p) for p in pref]
-        students.append(prefno)
+        # prefno = [int(p) for p in pref]
 
     # for each class in each student preference list, increment that classes preference level
     for student in students:
         for pref in student:
             mostPreferredClasses[pref-1] = (mostPreferredClasses[pref - 1][0] + 1, pref)
+            whoPrefers[pref - 1].append(student)
 
     # mergeSort the classes based on preference level
     mergeSort(mostPreferredClasses, 1)
@@ -171,23 +200,23 @@ def classQ(studentsFilename, numClasses):
         mostPreferred.append(c)
 
     file.close()
-    return mostPreferred, students
+    return mostPreferred, students, whoPrefers
 
 '''
+    generates array of LinkedList, where each LinkedList can hold time slots [person_index] has a class
+    
     Params: 
-        rooms -- an unsorted linked list of rooms and associated sizes (size, room #)
-    Returns: 
-        ret_list -- a linked list of rooms sorted in descending room size
+        size -- number of people in array (ex: number of professors)
+    Return:
+        sched -- array of LinkedLists
+    
 '''
-def roomQ(rooms):
-    # input: list of rooms - [size, room #] (tuple)
-    sorted_rooms = mergeSort(rooms, 1)
-    ret_list = LinkedList()
-
-    for i in range(len(sorted_rooms)):
-        ret_list.append(sorted_rooms[i])
-
-    return ret_list
+def generateSchedules(size):
+    sched = []
+    sched.append(LinkedList()) #for 0 case class
+    for i in range(size):
+        sched.append(LinkedList())
+    return sched
 
 #0 is greatest -> least, 1 is least -> greatest
 def mergeSort(arr, dir):
@@ -243,70 +272,77 @@ def classSchedule(constraints_filename, students_filename):
     #numTimeSlots - integer, number of time slots
     #rooms, unsorted linked list of rooms and associated sizes (size, room#)
     #classTeachers -- array of classes indexed by professor who teaches them
-    numTimeSlots, rooms, classTeachers = parseConstraints(constraints_filename)
+    numTimeSlots, maxRoomSize, classTeachers = parseConstraints(constraints_filename)
+    mergeSort(maxRoomSize, 0)
+    print(maxRoomSize)
     
-    # initialize preferred students and class ranked lists
-    classRanks, studentPref = classQ(students_filename, classes) 
-
-    #initialize the list of rooms
-    maxRoomSize = roomQ(rooms)
+    # initialize preferred students and Class ranked lists
+    classRanks, studentPrefLists, whoPrefers = classQ(students_filename, len(classTeachers))
     globalStudentCount = 0
 
-    # innit professors 
-    profSchedule = []
-    for i in range(len(classTeachers)):
-        profSchedule.append([])
-
     # innit student's schedules
-    studentSchedules = []
-    for i in range(len(studentPref)):
-        studentSchedules.append([])
+    studentSchedules = generateSchedules(len(studentPrefLists))
+    profSchedules = generateSchedules(int(len(classTeachers) / 2))
+    print(len(profSchedules))
 
-    holdClass = []
+    holdClass = LinkedList()
+    schedule = []
     for room in maxRoomSize:
-        for time in numTimeSlots:
+        schedule.append([])
+        for time in range(numTimeSlots):
+            print(f"{room}, {time}")
             if classRanks.isEmpty():
-                return globalStudentCount
-            clss = classRanks.popFront()
-            while classTeachers[clss].conflicts(numTimeSlots):
+                return schedule, globalStudentCount
+
+            clss = classRanks.popFront().data
+
+            while profSchedules[classTeachers[clss.name]].contains(time):
+                print(f"Conflict: {clss.name} at time {time}")
                 holdClass.append(clss)
-                clss = classRanks.popFront()
-            for item in holdClass:
-                classRanks.append(item)
-            prof = classTeachers[clss]
+                clss = classRanks.popFront().data
+
+            if not holdClass.isEmpty():
+                classRanks.merge(holdClass)
+
+            clss.professor = classTeachers[clss.name]
+
             # TODO: make studentPref into a LinkedList and clss.notFull thing
-            prof.schedule.append(time) #TODO 
-            while(clss.notFull and (studentPref.isEmpty())):
-                x = studentPref.popFront()
-                if(not x.timeConflict):
-                    studentSchedules[].append(x) # TODO
+            profSchedules[clss.professor].append(time)
+            while not room[0] == len(clss.enrolled) and not whoPrefers[clss.name].isEmpty():
+                x = whoPrefers[clss.name].popFront()
+                if(not studentSchedules[x].contains(time)):
+                    clss.enrolled.append(x)
+                    studentSchedules[x].append(x) # TODO
                     globalStudentCount+=1
-            studentPreferenceCount = globalStudentCount / 4
-            print(studentPreferenceCount)
 
+    studentPreferenceCount = globalStudentCount / 4
+    print(studentPreferenceCount)
 
-
-# Code to print the list
-def printList(arr):
-    for i in range(len(arr)):
-        print(arr[i], end=" ")
-    print()
+# # Code to print the list
+# def printList(arr):
+#     for i in range(len(arr)):
+#         print(arr[i], end=" ")
+#     print()
  
  
-# Driver Code
-if __name__ == '__main__':
-    arr = [12, 11, 13, 5, 6, 7]
-    print("Given array is", end="\n")
-    printList(arr)
-    mergeSort(arr,1)
-    print("Sorted array is: ", end="\n")
-    printList(arr)
+# # Driver Code
+# if __name__ == '__main__':
+#     arr = [12, 11, 13, 5, 6, 7]
+#     print("Given array is", end="\n")
+#     printList(arr)
+#     mergeSort(arr,1)
+#     print("Sorted array is: ", end="\n")
+#     printList(arr)
 
-li, s = classQ("demo_studentprefs.txt", 14)
+constraints = "../basic/demo_constraints.txt"
+studprefs = "../basic/demo_studentprefs.txt"
 
-times, rooms, classTeachers = parseConstraints("../basic/demo_constraints.txt")
-print(f"class times: {times}")
-print(f"rooms: {rooms}")
-print(f"number of classes: {classTeachers}")
+classSchedule(constraints, studprefs)
+# li, s, x = classQ("demo_studentprefs.txt", 14)
+
+# times, rooms, classTeachers = parseConstraints("../basic/demo_constraints.txt")
+# print(f"class times: {times}")
+# print(f"rooms: {rooms}")
+# print(f"number of classes: {classTeachers}")
 
 
