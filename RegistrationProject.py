@@ -1,6 +1,5 @@
 from email import header
-import re
-from re import S, X
+import pandas as pd
 
 class LinkedList:
     class Node:
@@ -87,7 +86,6 @@ class Class:
         self.professor = -1
         self.time = -1
         self.room = -1
-        self.roomSize = 0
         self.preferredStudents = 0
     
     def notFull(self):
@@ -300,11 +298,18 @@ def classSchedule(constraints_filename, students_filename):
 
     holdClass = LinkedList()
     schedule = []
+
     for room in maxRoomSize:
         schedule.append([])
+
+    for room in maxRoomSize:
         for time in range(numTimeSlots):
             if classRanks.isEmpty():
-                return schedule, globalStudentCount
+                df = pd.DataFrame(schedule)
+                df.columns = [f'time {t}' for t in range(numTimeSlots)]
+                df.index = [f'room {r[1]}' for r in maxRoomSize]
+                # print(studentPreferenceCount)
+                return df, globalStudentCount, globalStudentCount / (len(studentPrefLists) * 4)
 
             clss = classRanks.popFront().data
 
@@ -333,40 +338,28 @@ def classSchedule(constraints_filename, students_filename):
                 x = whoPrefers[clss.name].popFront().data
                 if(not studentSchedules[x].contains(time)):
                     clss.enrolled.append(x)
+                    
                     studentSchedules[x].append(x) # TODO
                     globalStudentCount+=1
 
-            print(f"Room: {room[1]} - Class {clss.name}, prof {clss.professor}, time {time}")
-                
+            clss.room = room[1]
+            clss.time = time
+            schedule[clss.room - 1].append(clss)
+            # print(f"Room: {room[1]} - Class {clss.name}, prof {clss.professor}, time {time}")
 
-    studentPreferenceCount = globalStudentCount / 4
-    print(studentPreferenceCount)
-
-# # Code to print the list
-# def printList(arr):
-#     for i in range(len(arr)):
-#         print(arr[i], end=" ")
-#     print()
- 
- 
-# # Driver Code
-# if __name__ == '__main__':
-#     arr = [12, 11, 13, 5, 6, 7]
-#     print("Given array is", end="\n")
-#     printList(arr)
-#     mergeSort(arr,1)
-#     print("Sorted array is: ", end="\n")
-#     printList(arr)
+    df = pd.DataFrame(schedule)
+    df.columns = [f'time{t}' for t in range(numTimeSlots)]
+    df.index = [f'room {r[1]}' for r in maxRoomSize]
+    # print(studentPreferenceCount)
+    return df, globalStudentCount, globalStudentCount / (len(studentPrefLists) * 4)
 
 constraints = "../basic/demo_constraints.txt"
 studprefs = "../basic/demo_studentprefs.txt"
 
-classSchedule(constraints, studprefs)
-# li, s, x = classQ("demo_studentprefs.txt", 14)
+schedule, enrolledStudentCount, maxPossibleStudentCount = classSchedule(constraints, studprefs)
 
-# times, rooms, classTeachers = parseConstraints("../basic/demo_constraints.txt")
-# print(f"class times: {times}")
-# print(f"rooms: {rooms}")
-# print(f"number of classes: {classTeachers}")
+print(schedule)
+print(enrolledStudentCount)
+print(maxPossibleStudentCount)
 
 
