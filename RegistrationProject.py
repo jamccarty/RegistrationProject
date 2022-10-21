@@ -108,7 +108,7 @@ def parseConstraints(filename):
 # returns
 #   mostPreferred -- LinkedList of classes organized in descending order by how preferred they are
 #   students -- array of arrays. Outer array is indexed by student id, inner arrays are student preference lists
-def classQ(studentPrefsFile, numClasses):
+def classQ(studentsFilename, numClasses):
     # array of tuples for merge sort reasons --> will turn into LinkedList() later
     # will be organized (preference level of class, class id)
     mostPreferredClasses = []
@@ -116,7 +116,9 @@ def classQ(studentPrefsFile, numClasses):
     for i in range(numClasses):
         mostPreferredClasses.append((0, i))
 
-    string = studentPrefsFile.read()
+    file = open(studentsFilename)
+
+    string = file.read()
     lines = string.split('\n')
     lines = lines[1:] #skip first line
 
@@ -145,6 +147,7 @@ def classQ(studentPrefsFile, numClasses):
         c.preferredStudents = pref
         mostPreferred.append(c)
 
+    file.close()
     return mostPreferred, students
 
 def roomQ(rooms):
@@ -207,11 +210,15 @@ def mergeSort(arr, dir):
             j += 1
             k += 1
  
-def classSchedule(filename, students_filename):
-    # parse contents to get time slots, rooms, and professors
-    timeslots, rooms, classProf = parseConstraints(filename)
+def classSchedule(constraints_filename, students_filename):
     # initialize preferred students and class ranked lists
     classRanks, studentPref = classQ(students_filename, classes) 
+
+    #numTimeSlots - integer, number of time slots
+    #rooms, unsorted linked list of rooms and associated sizes (size, room#)
+    #classTeachers -- array of classes indexed by professor who teaches them
+    numTimeSlots, rooms, classTeachers = parseConstraints(constraints_filename)
+
     #initialize the list of rooms
     maxRoomSize = roomQ(rooms)
     globalStudentCount = 0
