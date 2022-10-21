@@ -204,9 +204,10 @@ def classQ(studentsFilename, numClasses):
             whoPrefers[pref].append(i)
 
     # mergeSort the classes based on preference level
-    # #print(mostPreferredClasses)
+
+    # print(mostPreferredClasses)
     mergeSort(mostPreferredClasses, 1)
-    # #print(mostPreferredClasses)
+    # print(mostPreferredClasses)
 
     # turn mostPreferredClasses array from an array of tuples to a linked list of Class() objects
     #(will make O(1) removal/re-adding sections when conflicts)
@@ -291,7 +292,6 @@ def classSchedule(constraints_filename, students_filename):
     #classTeachers -- array of classes indexed by professor who teaches them
     numTimeSlots, maxRoomSize, classTeachers = parseConstraints(constraints_filename)
     mergeSort(maxRoomSize, 0)
-    # print(maxRoomSize)
     
     # initialize preferred students and Class ranked lists
     classRanks, studentPrefLists, whoPrefers = classQ(students_filename, len(classTeachers))
@@ -300,7 +300,6 @@ def classSchedule(constraints_filename, students_filename):
     # innit student's schedules
     studentSchedules = generateSchedules(len(studentPrefLists))
     profSchedules = generateSchedules(int(len(classTeachers) / 2))
-    # print(len(profSchedules))
 
     holdClass = LinkedList()
     schedule = []
@@ -363,6 +362,7 @@ file = input("file: ")
 constraints = f"prefs/{file}c.txt"
 studprefs = f"prefs/{file}p.txt"
 
+
 start = datetime.datetime.now().microsecond
 schedule, enrolledStudentCount, maxPossibleStudentCount = classSchedule(constraints, studprefs)
 end = datetime.datetime.now().microsecond
@@ -371,4 +371,23 @@ print(f"Time: {start} {end} {(end - start) / 1000}")
 schedule.to_csv("testSched.csv")
 print(enrolledStudentCount)
 print(maxPossibleStudentCount)
+
+'''
+#schedule, enrolledStudentCount, maxPossibleStudentCount = classSchedule(constraints, studprefs)
+
+#print(schedule)
+#print(enrolledStudentCount)
+#print(maxPossibleStudentCount)
+
+x = 1
+while x < 9:
+    constraints = "prefs/d" + str(x) + "c.txt"
+    studprefs = "prefs/d" + str(x) + "p.txt"
+    schedule, enrolledStudentCount, maxPossibleStudentCount = classSchedule(constraints, studprefs)
+    print(enrolledStudentCount)
+    #print("max " + str(maxPossibleStudentCount))
+    #print(schedule)
+    x+=1
+'''
+
 
