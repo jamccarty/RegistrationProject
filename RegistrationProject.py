@@ -352,31 +352,55 @@ def classSchedule(constraints_filename, students_filename):
             schedule[clss.room - 1].append(clss)
             # print(f"Room: {room[1]} - Class {clss.name}, prof {clss.professor}, time {time}")
 
-    df = pd.DataFrame(schedule)
-    df.columns = [f'time{t}' for t in range(numTimeSlots)]
-    df.index = [f'room {r[1]}' for r in maxRoomSize]
-    # print(studentPreferenceCount)
-    return df, globalStudentCount, globalStudentCount / ((len(studentPrefLists) - 1) * 4)
+    # df = pd.DataFrame(schedule)
+    # df.columns = [f'time{t}' for t in range(numTimeSlots)]
+    # df.index = [f'room {r[1]}' for r in maxRoomSize]
+    return schedule, globalStudentCount, globalStudentCount / ((len(studentPrefLists) - 1) * 4)
 
 file = input("file: ")
+chars = ['a', 'b', 'c', 'd', 'e']
 
+# # df = pd.DataFrame()
+# timeChart = pd.DataFrame()
 
-x = 1
-while x < 9:
-    print(f"\n{x}")
-    constraints = f"prefs/{file}" + str(x) + "c.txt"
-    studprefs = f"prefs/{file}" + str(x) + "p.txt"
-    
-    start = datetime.datetime.now().microsecond / 1000
-    schedule, enrolledStudentCount, maxPossibleStudentCount = classSchedule(constraints, studprefs)
-    end = datetime.datetime.now().microsecond / 1000
+for c in chars:
+    # li = []
+    # times = []
+    for x in range(1, 9):
+        # print(f"\n{c}{x}")
+        constraints = f"prefs/{c}{x}c.txt"
+        studprefs = f"prefs/{c}{x}p.txt"
+        
+        start = datetime.datetime.now().microsecond / 10000
+        schedule, enrolledStudentCount, maxPossibleStudentCount = classSchedule(constraints, studprefs)
+        end = datetime.datetime.now().microsecond / 10000
+        
+        output = ""
+        output += "Course\tRoom\tTeacher\tTime\tStudents"
 
-    print(f"Time (milli): {(end - start)}")
+        for i in schedule:
+            for j in i:
+                output += f"{j.name}\t{j.room}\t{j.professor}\t{j.time}\t"
+                for s in j.enrolled:
+                    output += f"{s} "
+                output += "\n"
 
-    schedule.to_csv("testSched.csv")
-    print(enrolledStudentCount)
-    print(maxPossibleStudentCount)
-    x+=1
+        outputFile = open(f"prefs/output{c}{x}.txt", "w")
+        outputFile.write(output)
+
+        # print(f"Time (milli): {(end - start)}")
+
+        # schedule.to_csv("testSched.csv")
+        # print(enrolledStudentCount)
+        # print(maxPossibleStudentCount)
+        # li.append(maxPossibleStudentCount)
+        # times.append(end - start)
+    # df[c] = li
+    # df.index = [i for i in range(1, 9)]
+    # timeChart[c] = times
+    # timeChart.index = [i for i in range(1, 9)]
+# df.to_csv("results.csv")
+# timeChart.to_csv("timeResults.csv")
 
 
 
