@@ -173,9 +173,15 @@ def classQ(studentsFilename, numClasses):
     file.close()
     return mostPreferred, students
 
+'''
+    Params: 
+        rooms -- an unsorted linked list of rooms and associated sizes (size, room #)
+    Returns: 
+        ret_list -- a linked list of rooms sorted in descending room size
+'''
 def roomQ(rooms):
     # input: list of rooms - [size, room #] (tuple)
-    sorted_rooms = mergeSort(rooms, 0)
+    sorted_rooms = mergeSort(rooms, 1)
     ret_list = LinkedList()
 
     for i in range(len(sorted_rooms)):
@@ -248,7 +254,7 @@ def classSchedule(constraints_filename, students_filename):
 
     # innit professors 
     profSchedule = []
-    for i in range(len(classProf)):
+    for i in range(len(classTeachers)):
         profSchedule.append([])
 
     # innit student's schedules
@@ -258,22 +264,22 @@ def classSchedule(constraints_filename, students_filename):
 
     holdClass = []
     for room in maxRoomSize:
-        for time in T:
+        for time in numTimeSlots:
             if classRanks.isEmpty():
                 return globalStudentCount
             clss = classRanks.popFront()
-            while classProf[clss].conflicts(T):
+            while classTeachers[clss].conflicts(numTimeSlots):
                 holdClass.append(clss)
                 clss = classRanks.popFront()
             for item in holdClass:
                 classRanks.append(item)
-            prof = classProf[clss]
-            # TODO: this, notFull, and whatever is going on in the while loop below
-            prof.schedule.append(time) 
+            prof = classTeachers[clss]
+            # TODO: make studentPref into a LinkedList and clss.notFull thing
+            prof.schedule.append(time) #TODO 
             while(clss.notFull and (studentPref.isEmpty())):
                 x = studentPref.popFront()
                 if(not x.timeConflict):
-                    students.append(x)
+                    studentSchedules[].append(x) # TODO
                     globalStudentCount+=1
             studentPreferenceCount = globalStudentCount / 4
             print(studentPreferenceCount)
