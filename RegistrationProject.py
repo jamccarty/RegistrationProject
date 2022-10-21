@@ -359,35 +359,24 @@ def classSchedule(constraints_filename, students_filename):
     return df, globalStudentCount, globalStudentCount / ((len(studentPrefLists) - 1) * 4)
 
 file = input("file: ")
-constraints = f"prefs/{file}c.txt"
-studprefs = f"prefs/{file}p.txt"
 
-
-start = datetime.datetime.now().microsecond
-schedule, enrolledStudentCount, maxPossibleStudentCount = classSchedule(constraints, studprefs)
-end = datetime.datetime.now().microsecond
-print(f"Time: {start} {end} {(end - start) / 1000}")
-
-schedule.to_csv("testSched.csv")
-print(enrolledStudentCount)
-print(maxPossibleStudentCount)
-
-'''
-#schedule, enrolledStudentCount, maxPossibleStudentCount = classSchedule(constraints, studprefs)
-
-#print(schedule)
-#print(enrolledStudentCount)
-#print(maxPossibleStudentCount)
 
 x = 1
 while x < 9:
-    constraints = "prefs/d" + str(x) + "c.txt"
-    studprefs = "prefs/d" + str(x) + "p.txt"
+    print(f"\n{x}")
+    constraints = f"prefs/{file}" + str(x) + "c.txt"
+    studprefs = f"prefs/{file}" + str(x) + "p.txt"
+    
+    start = datetime.datetime.now().microsecond / 1000
     schedule, enrolledStudentCount, maxPossibleStudentCount = classSchedule(constraints, studprefs)
+    end = datetime.datetime.now().microsecond / 1000
+
+    print(f"Time (milli): {(end - start)}")
+
+    schedule.to_csv("testSched.csv")
     print(enrolledStudentCount)
-    #print("max " + str(maxPossibleStudentCount))
-    #print(schedule)
+    print(maxPossibleStudentCount)
     x+=1
-'''
+
 
 
