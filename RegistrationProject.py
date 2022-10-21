@@ -6,9 +6,11 @@ class LinkedList:
         def __init__(self, data):
             self.data = data
             self.next = None
+            self.prev = None
 
     def __init__(self):
         self.head = None
+        self.tail = None
 
     def __str__(self) -> str:
         s = ""
@@ -20,19 +22,40 @@ class LinkedList:
         
         return s
 
-    def append(self, data):
+    def prepend(self, data):
         n = self.Node(data)
 
         if self.head == None:
             self.head = n
+            self.tail = n
         else:
             n.next = self.head
+            self.head.prev = n
             self.head = n
+    
+    def append(self, data):
+        n = self.Node(data)
+
+        if self.tail == None:
+            self.head = n
+            self.tail = n
+        else:
+            self.tail.next = n
+            n.prev = self.tail
+            self.tail = n
 
     def popFront(self):
         n = self.head
         self.head = n.next
         return n
+    
+    # merge two linked lists so that A->B
+    def merge(self, A):
+        self.tail.next = A.head
+        A.head.prev = self.tail
+        A.head = None
+        self.tail = A.tail
+
     def isEmpty(self):
         return self.head.next is None
 
@@ -211,13 +234,13 @@ def mergeSort(arr, dir):
             k += 1
  
 def classSchedule(constraints_filename, students_filename):
-    # initialize preferred students and class ranked lists
-    classRanks, studentPref = classQ(students_filename, classes) 
-
     #numTimeSlots - integer, number of time slots
     #rooms, unsorted linked list of rooms and associated sizes (size, room#)
     #classTeachers -- array of classes indexed by professor who teaches them
     numTimeSlots, rooms, classTeachers = parseConstraints(constraints_filename)
+    
+    # initialize preferred students and class ranked lists
+    classRanks, studentPref = classQ(students_filename, classes) 
 
     #initialize the list of rooms
     maxRoomSize = roomQ(rooms)
@@ -254,6 +277,9 @@ def classSchedule(constraints_filename, students_filename):
                     globalStudentCount+=1
             studentPreferenceCount = globalStudentCount / 4
             print(studentPreferenceCount)
+
+
+
 # Code to print the list
 def printList(arr):
     for i in range(len(arr)):
@@ -270,13 +296,11 @@ if __name__ == '__main__':
     print("Sorted array is: ", end="\n")
     printList(arr)
 
-stud = open("demo_studentprefs.txt")
-li, s = classQ(stud, 14)
+li, s = classQ("demo_studentprefs.txt", 14)
 
-times, rooms, classes, teachers = parseConstraints("../basic/demo_constraints.txt")
+times, rooms, classTeachers = parseConstraints("../basic/demo_constraints.txt")
 print(f"class times: {times}")
 print(f"rooms: {rooms}")
-print(f"number of classes: {classes}")
-print(f"teachers list: {teachers}")
+print(f"number of classes: {classTeachers}")
 
 
