@@ -198,9 +198,9 @@ def classQ(studentsFilename, numClasses):
             whoPrefers[pref - 1].append(i)
 
     # mergeSort the classes based on preference level
-    print(mostPreferredClasses)
+    #print(mostPreferredClasses)
     mergeSort(mostPreferredClasses, 1)
-    print(mostPreferredClasses)
+    #print(mostPreferredClasses)
 
     # turn mostPreferredClasses array from an array of tuples to a linked list of Class() objects
     #(will make O(1) removal/re-adding sections when conflicts)
@@ -285,7 +285,7 @@ def classSchedule(constraints_filename, students_filename):
     #classTeachers -- array of classes indexed by professor who teaches them
     numTimeSlots, maxRoomSize, classTeachers = parseConstraints(constraints_filename)
     mergeSort(maxRoomSize, 0)
-    print(maxRoomSize)
+    #print(maxRoomSize)
     
     # initialize preferred students and Class ranked lists
     classRanks, studentPrefLists, whoPrefers = classQ(students_filename, len(classTeachers))
@@ -294,7 +294,7 @@ def classSchedule(constraints_filename, students_filename):
     # innit student's schedules
     studentSchedules = generateSchedules(len(studentPrefLists))
     profSchedules = generateSchedules(int(len(classTeachers) / 2))
-    print(len(profSchedules))
+    #print(len(profSchedules))
 
     holdClass = LinkedList()
     schedule = []
@@ -356,10 +356,19 @@ def classSchedule(constraints_filename, students_filename):
 constraints = "../basic/demo_constraints.txt"
 studprefs = "../basic/demo_studentprefs.txt"
 
-schedule, enrolledStudentCount, maxPossibleStudentCount = classSchedule(constraints, studprefs)
+#schedule, enrolledStudentCount, maxPossibleStudentCount = classSchedule(constraints, studprefs)
 
-print(schedule)
-print(enrolledStudentCount)
-print(maxPossibleStudentCount)
+#print(schedule)
+#print(enrolledStudentCount)
+#print(maxPossibleStudentCount)
 
+x = 1
+while x < 9:
+    constraints = "prefs/d" + str(x) + "c.txt"
+    studprefs = "prefs/d" + str(x) + "p.txt"
+    schedule, enrolledStudentCount, maxPossibleStudentCount = classSchedule(constraints, studprefs)
+    print(enrolledStudentCount)
+    #print("max " + str(maxPossibleStudentCount))
+    #print(schedule)
+    x+=1
 
