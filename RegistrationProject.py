@@ -1,5 +1,5 @@
-from email import header
 import pandas as pd
+import datetime
 
 class LinkedList:
     class Node:
@@ -181,26 +181,33 @@ def classQ(studentsFilename, numClasses):
     i = 0
     # fill students
     for line in lines:
+        i += 1
         if line == "":
             break
-        students.append([])
+        
         line = line.split('\t')[1] #isolate student preferences
         pref = line.split(' ') #parse preferences
+
+        if len(pref) == 0:
+            break
+        students.append([])
         students[i] = [int(p) for p in pref] #convert preferences to integers
-        i += 1
+
 
     # for each class in each student preference list, increment that classes preference level
     i = -1
+    whoPrefers.append(0) #0 prefer class 0 which doesn't exist
     for student in students:
         i += 1
         for pref in student:
             mostPreferredClasses[pref-1] = (mostPreferredClasses[pref - 1][0] + 1, pref)
-            whoPrefers[pref - 1].append(i)
+            whoPrefers[pref].append(i)
 
     # mergeSort the classes based on preference level
-    #print(mostPreferredClasses)
+
+    # print(mostPreferredClasses)
     mergeSort(mostPreferredClasses, 1)
-    #print(mostPreferredClasses)
+    # print(mostPreferredClasses)
 
     # turn mostPreferredClasses array from an array of tuples to a linked list of Class() objects
     #(will make O(1) removal/re-adding sections when conflicts)
@@ -285,7 +292,6 @@ def classSchedule(constraints_filename, students_filename):
     #classTeachers -- array of classes indexed by professor who teaches them
     numTimeSlots, maxRoomSize, classTeachers = parseConstraints(constraints_filename)
     mergeSort(maxRoomSize, 0)
-    #print(maxRoomSize)
     
     # initialize preferred students and Class ranked lists
     classRanks, studentPrefLists, whoPrefers = classQ(students_filename, len(classTeachers))
@@ -294,7 +300,6 @@ def classSchedule(constraints_filename, students_filename):
     # innit student's schedules
     studentSchedules = generateSchedules(len(studentPrefLists))
     profSchedules = generateSchedules(int(len(classTeachers) / 2))
-    #print(len(profSchedules))
 
     holdClass = LinkedList()
     schedule = []
@@ -322,6 +327,7 @@ def classSchedule(constraints_filename, students_filename):
                 if classRanks.isEmpty():
                     skipTime = True
                     break
+            
 
             if skipTime == True:
                 classRanks = holdClass
@@ -331,8 +337,7 @@ def classSchedule(constraints_filename, students_filename):
                 classRanks.merge(holdClass)
 
             clss.professor = classTeachers[clss.name]
-
-            # TODO: make studentPref into a LinkedList and clss.notFull thing
+            
             profSchedules[clss.professor].append(time)
             while not room[0] == len(clss.enrolled) and not whoPrefers[clss.name].isEmpty():
                 x = whoPrefers[clss.name].popFront().data
@@ -351,11 +356,23 @@ def classSchedule(constraints_filename, students_filename):
     df.columns = [f'time{t}' for t in range(numTimeSlots)]
     df.index = [f'room {r[1]}' for r in maxRoomSize]
     # print(studentPreferenceCount)
-    return df, globalStudentCount, globalStudentCount / (len(studentPrefLists) * 4)
+    return df, globalStudentCount, globalStudentCount / ((len(studentPrefLists) - 1) * 4)
 
-constraints = "../basic/demo_constraints.txt"
-studprefs = "../basic/demo_studentprefs.txt"
+file = input("file: ")
+constraints = f"prefs/{file}c.txt"
+studprefs = f"prefs/{file}p.txt"
 
+
+start = datetime.datetime.now().microsecond
+schedule, enrolledStudentCount, maxPossibleStudentCount = classSchedule(constraints, studprefs)
+end = datetime.datetime.now().microsecond
+print(f"Time: {start} {end} {(end - start) / 1000}")
+
+schedule.to_csv("testSched.csv")
+print(enrolledStudentCount)
+print(maxPossibleStudentCount)
+
+'''
 #schedule, enrolledStudentCount, maxPossibleStudentCount = classSchedule(constraints, studprefs)
 
 #print(schedule)
@@ -371,4 +388,6 @@ while x < 9:
     #print("max " + str(maxPossibleStudentCount))
     #print(schedule)
     x+=1
+'''
+
 
