@@ -100,7 +100,16 @@ foreach my $student ((1..$numstudents)) {
 		}
 		push @chosenclasses, $wantclass;
 	}
-	print PREFS "$student\t@chosenclasses\n";
+	#add an class year for each student. 25% chance of each year
+	# 1 is first year, 2 for 2nd, 3 for 3rd, 4 for 4th year
+	my $classyear = int(rand(4)) + 1;
+	#add an accessibility need. 0 means no access needed
+	# 1% chance of 1 meaning student needs an accessible class
+	my $accessvalue = int(rand(100)) + 1;
+	if ($accessvalue > 1){
+		$accessvalue = 0;
+	}
+	print PREFS "$student\t@chosenclasses\t$classyear\t$accessvalue\n";
 }
 
 
