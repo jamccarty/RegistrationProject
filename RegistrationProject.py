@@ -376,7 +376,7 @@ for c in chars:
         end = datetime.datetime.now().microsecond / 10000
         
         output = ""
-        output += "Course\tRoom\tTeacher\tTime\tStudents"
+        output += "Course\tRoom\tTeacher\tTime\tStudents\n"
 
         for i in schedule:
             for j in i:
