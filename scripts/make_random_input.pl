@@ -71,7 +71,22 @@ print CONSTRAINT "Rooms\t$numrooms\n";
 foreach my $room ((1..$numrooms)) {
 	my $newval = rand();  # gives a random value between 0 and 1
 	my $roomcap = floor($newval * ($maxroomcapacity - $minroomcapacity) + $minroomcapacity);  # room capacity between 10 and 100
-	print CONSTRAINT "$room\t$roomcap\n";
+	#add a room domain based on A, B, and C domains (evenly distributed)
+	my $numindom = int($nummajors / 3);
+	my $roomdomain = "";
+	my $assigndomain = int(rand(3));
+	if($assigndomain == 0){
+		$roomdomain = "A";
+	}
+	elsif($assigndomain == 1){
+		$roomdomain = "B";
+	}
+	else{
+		$roomdomain = "C";
+	}
+	#add a classroom accessibility value (50% accessible classrooms)
+	my $accessv = int(rand(2));
+	print CONSTRAINT "$room\t$roomcap\t$roomdomain\t$accessv\n";
 }
 
 print CONSTRAINT "Classes\t$numclasses\n";
@@ -98,9 +113,7 @@ foreach my $class ((1..$numclasses)) {
 			$classdomain = "C";
 		}
 	}
-	#add a classroom accessibility value (50% accessible classrooms)
-	my $accessval = int(rand(2));
-	print CONSTRAINT "$class\t$teacher\t$classmajor\t$classdomain\t$accessval\n";
+	print CONSTRAINT "$class\t$teacher\t$classmajor\t$classdomain\n";
 	if (!defined $classestaught{$teacher}) {
 		$classestaught{$teacher} = 1;
 	} else {
