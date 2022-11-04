@@ -366,6 +366,7 @@ chars = ['a', 'b', 'c', 'd', 'e']
 for c in chars:
     # li = []
     # times = []
+    # is 
     for x in range(1, 9):
         # print(f"\n{c}{x}")
         constraints = f"prefs/{c}{x}c.txt"
@@ -385,8 +386,8 @@ for c in chars:
                     output += f"{s} "
                 output += "\n"
 
-        outputFile = open(f"prefs/output{c}{x}.txt", "w")
-        outputFile.write(output)
+        outputFile = open(f"prefs/output{c}{x}.txt", "wb")
+        outputFile.write(bytes(output, "UTF-8"))
 
         # print(f"Time (milli): {(end - start)}")
 
