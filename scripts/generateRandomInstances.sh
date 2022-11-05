@@ -2,7 +2,7 @@
 
 set -o errexit
 
-if [[ "$#" != "5" ]]; then
+if [[ "$#" != "6" ]]; then
 	echo "Usage: bash generateRandomInstances.sh [instances] [rooms] [classes] [times] [students] [majors]"
 	exit 0
 fi
