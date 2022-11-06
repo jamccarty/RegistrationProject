@@ -1,82 +1,6 @@
 import pandas as pd
 import datetime
-
-class LinkedList:
-    class Node:
-        def __init__(self, data):
-            self.data = data
-            self.next = None
-            self.prev = None
-
-    def __init__(self):
-        self.head = None
-        self.tail = None
-
-    def __str__(self) -> str:
-        s = ""
-        loc = self.head
-
-        while loc != None:
-            s += f" -> {loc.data}"
-            loc = loc.next
-        
-        return s
-
-    def prepend(self, data):
-        n = self.Node(data)
-
-        if self.head == None:
-            self.head = n
-            self.tail = n
-        else:
-            n.next = self.head
-            self.head.prev = n
-            self.head = n
-    
-    def append(self, data):
-        n = self.Node(data)
-
-        if self.tail == None:
-            self.head = n
-            self.tail = n
-        else:
-            self.tail.next = n
-            n.prev = self.tail
-            self.tail = n
-
-    def popFront(self):
-        if self.head == None:
-            return None
-        if self.head.next == None:
-            n = self.head
-            self.head = None
-            return n
-        
-        n = self.head
-
-        if not n.next == None:
-            self.head = n.next
-        return n
-    
-    # merge two linked lists so that A->B
-    def merge(self, A):
-        self.tail.next = A.head
-        A.head.prev = self.tail
-        A.head = None
-        self.tail = A.tail
-
-    def contains(self, data):
-        loc = self.head
-
-        while loc != None:
-            if loc.data == data:
-                return True
-            loc = loc.next
-        
-        return False
-
-    def isEmpty(self):
-        return self.head == None
+import DataStructures as ds
 
 class Class:
 
@@ -167,11 +91,11 @@ def classQ(studentsFilename, numClasses):
 
     #array of LinkedLists of all students who prefer class, indexed by class
     whoPrefers = []
-    whoPrefers.append(LinkedList()) #append blank -- no class 0
+    whoPrefers.append(ds.LinkedList()) #append blank -- no class 0
 
     for i in range(numClasses):
         mostPreferredClasses.append((0, i))
-        whoPrefers.append(LinkedList())
+        whoPrefers.append(ds.LinkedList())
 
     file = open(studentsFilename)
 
@@ -199,7 +123,7 @@ def classQ(studentsFilename, numClasses):
 
     # for each class in each student preference list, increment that classes preference level
     i = -1
-    whoPrefers.append(0) #0 prefer class 0 which doesn't exist
+    whoPrefers.append(0) #0 prefer class 0 which doesn't exist --> I don't know what this does but I'm too scared to change it
     for student in students:
         i += 1
         for pref in student:
@@ -214,7 +138,7 @@ def classQ(studentsFilename, numClasses):
 
     # turn mostPreferredClasses array from an array of tuples to a linked list of Class() objects
     #(will make O(1) removal/re-adding sections when conflicts)
-    mostPreferred = LinkedList()
+    mostPreferred = ds.LinkedList()
     for (pref, id) in mostPreferredClasses:
         c = Class(id)
         c.preferredStudents = pref
@@ -234,9 +158,9 @@ def classQ(studentsFilename, numClasses):
 '''
 def generateSchedules(size):
     sched = []
-    sched.append(LinkedList()) #for 0 case class
+    sched.append(ds.LinkedList()) #for 0 case class
     for i in range(size):
-        sched.append(LinkedList())
+        sched.append(ds.LinkedList())
     return sched
 
 #0 is greatest -> least, 1 is least -> greatest
@@ -304,7 +228,7 @@ def classSchedule(constraints_filename, students_filename):
     studentSchedules = generateSchedules(len(studentPrefLists))
     profSchedules = generateSchedules(int(len(classTeachers) / 2))
 
-    holdClass = LinkedList()
+    holdClass = ds.LinkedList()
     schedule = []
 
     for room in maxRoomSize:
@@ -323,13 +247,14 @@ def classSchedule(constraints_filename, students_filename):
 
             skipTime = False
             while profSchedules[classTeachers[clss.name]].contains(time):
-                # print(f"Conflict: {clss.name} at time {time}")
+                #while profSchedules[classFacts[clss.name].professor].contains(time):
                 holdClass.append(clss)
-                clss = classRanks.popFront().data
 
                 if classRanks.isEmpty():
                     skipTime = True
                     break
+
+                clss = classRanks.popFront().data
             
 
             if skipTime == True:
@@ -360,12 +285,13 @@ def classSchedule(constraints_filename, students_filename):
     # df.index = [f'room {r[1]}' for r in maxRoomSize]
     return schedule, globalStudentCount, globalStudentCount / ((len(studentPrefLists) - 1) * 4)
 
-file = open("output.txt", "wb")
-file.write(bytes("Course\tRoom\tTeacher\tTime\tStudents\n", "UTF-8"))
+file = open("../basic/output.txt", "w")
+print(file)
+file.write("Course\tRoom\tTeacher\tTime\tStudents\n")
 schedule, globalStudentCount, score = classSchedule("demo_constraints.txt", "demo_studentprefs.txt")
 
 for time in schedule:
     for clss in time:
-        file.write(bytes(f"{clss}\n","UTF-8"))
+        file.write(f"{clss}\n")
 
 file.close()

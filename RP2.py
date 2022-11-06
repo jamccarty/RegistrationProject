@@ -6,27 +6,21 @@ import classroomMechanics as mech
 
 '''
 parses contents of constraints.txt
-
 params:
   file location of constraints.txt
-
 returns: numTimeSlots, rooms, classFacts, domains
-
     numTimeSlots -- number of time slots (integer)
-
     rooms -- array of Room() objects - 
         Each Room() object in rooms holds the following pieces of information:
             id - the id of the room, integer
             capacity - the capacity of the room, integer
             domain - the domain in which the room is located, string
             accessible - whether or not the room is accessible, boolean
-
     classFacts -- array of classFacts() objects indexed by class id (size is number of classes)
         Each location in classFacts holds three pieces of information:
             classFacts[class_id].professor - the professor this class can be taught by
             classFacts[class_id].major - the major this class contributes to
             classFacts[class_id].domain - the domain this class must be taught in
-
     domains - an array of all domains
 '''
 def parseConstraints(filename):
@@ -281,11 +275,12 @@ def classSchedule(constraints_filename, students_filename):
 
             while profSchedules[classFacts[clss.name].professor].contains(time):
                 holdClass.append(clss)
-                clss = classRanks.popFront().data
 
                 if classRanks.isEmpty():
                     skipTime = True
                     break
+
+                clss = classRanks.popFront().data
 
             if skipTime == True:
                 classRanks = holdClass
@@ -313,7 +308,6 @@ def classSchedule(constraints_filename, students_filename):
     return schedule, globalStudentCount, globalStudentCount / ((len(studentPrefLists) - 1) * 4)
 
 mostPreferred, studentPreferences, whoPrefers = classQ("mod_studentprefs_demo.txt", 14)
-print(whoPrefers[6])
 numTimeSlots, rooms, classFacts, domains = parseConstraints("mod_constraints_demo.txt")
 
 file = open("../basic/output.txt", "w")
