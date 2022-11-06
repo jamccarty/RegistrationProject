@@ -361,7 +361,6 @@ def classSchedule(constraints_filename, students_filename):
     return schedule, globalStudentCount, globalStudentCount / ((len(studentPrefLists) - 1) * 4)
 
 file = open("output.txt", "wb")
-print(file)
 file.write(bytes("Course\tRoom\tTeacher\tTime\tStudents\n", "UTF-8"))
 schedule, globalStudentCount, score = classSchedule("demo_constraints.txt", "demo_studentprefs.txt")
 
