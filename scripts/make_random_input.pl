@@ -17,11 +17,17 @@ if (!$ARGV[0] || !$ARGV[1] || !$ARGV[2] || !$ARGV[3] || !$ARGV[4] || !$ARGV[5] |
 
 my $numrooms = $ARGV[0];
 my $numclasses = $ARGV[1];
+my $numesems = ceil($ARGV[1]*.05);
+my $nonesems = $numclasses - $numesems;
 my $numslots = $ARGV[2];
 my $nummajors = $ARGV[4];
 
 if ($numclasses % 2 != 0) {
 	print "The number of classes must be even, since we're assuming each teacher teaches 2 classes and there cannot be fractional teachers.\n";
+	exit 1;
+}
+if ($numclasses < 20) {
+	print "The number of classes must be 20 or higher so that at least one esem is added.\n";
 	exit 1;
 }
 if ($nummajors > $numclasses){
@@ -92,6 +98,7 @@ foreach my $room ((1..$numrooms)) {
 print CONSTRAINT "Classes\t$numclasses\n";
 print CONSTRAINT "Teachers\t$numteachers\n";
 my %classestaught = ();
+my $countforesems = 0;
 foreach my $class ((1..$numclasses)) {
 	my $teacher = ceil(rand() * $numteachers);
 	while (defined $classestaught{$teacher}  && $classestaught{$teacher}== 2) {
@@ -113,12 +120,17 @@ foreach my $class ((1..$numclasses)) {
 			$classdomain = "C";
 		}
 	}
-	print CONSTRAINT "$class\t$teacher\t$classmajor\t$classdomain\n";
+	my $isesem = 0;
+	if ($countforesems < $numesems){
+		$isesem = 1;
+	}
+	print CONSTRAINT "$class\t$teacher\t$classmajor\t$classdomain\t$isesem\n";
 	if (!defined $classestaught{$teacher}) {
 		$classestaught{$teacher} = 1;
 	} else {
 		$classestaught{$teacher}++;
 	}
+	$countforesems = $countforesems + 1;
 }
 
 close CONSTRAINT;
@@ -129,16 +141,24 @@ open (PREFS, ">> $prefsfile") || die "Can't open file: $prefsfile\n";
 print PREFS "Students\t$numstudents\n";
 foreach my $student ((1..$numstudents)) {
 	my @chosenclasses = ();
+	#add an class year for each student. 25% chance of each year
+	# 1 is first year, 2 for 2nd, 3 for 3rd, 4 for 4th year
+	my $classyear = int(rand(4)) + 1;
+	if ($classyear == 1){
+		my $wantesem = ceil(rand() * $numesems);
+		push @chosenclasses, $wantesem;
+		$classesperstudent = $classesperstudent - 1;
+	}
 	for my $i ((1..$classesperstudent)) {
-		my $wantclass = ceil(rand() * $numclasses);
+		my $wantclass = ceil(rand() * $numclasses) + $numesems;
 		while (inarray($wantclass, \@chosenclasses)) {
 			$wantclass = ceil(rand() * $numclasses);
 		}
 		push @chosenclasses, $wantclass;
 	}
-	#add an class year for each student. 25% chance of each year
-	# 1 is first year, 2 for 2nd, 3 for 3rd, 4 for 4th year
-	my $classyear = int(rand(4)) + 1;
+	if ($classyear == 1){
+		$classesperstudent = $classesperstudent + 1;
+	}
 	#add a major for each student in their third or fourth year
 	my $major = -1;
 	if ($classyear >= 3){
