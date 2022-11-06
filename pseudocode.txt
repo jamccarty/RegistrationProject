@@ -1,0 +1,22 @@
+COMPLETE
+Prioritize majors over nonmajors
+    add to list of majors
+COMPLETE
+Prioritize seniors > juniors > soph > fresh
+
+INCOMPLETE
+Classify buildings into domains
+    mostPreferredClass lists for each domains keep track of classes already shceduled
+        if scheduled for one domain, don't schedule again in another
+
+INCOMPLETE
+Classify rooms as accessible or nonaccessible
+    list of students who need accessible rooms -> Prioritize (small < 1%)
+
+INCOMPLETE
+Every freshman needs an Esem -> Esem specific timeslot (time 0)
+
+INCOMPLETE
+Minimize # inter-department conflicts
+enrollmentConflicts[B][A] - Frac of class A that want to take class B
+                        - toggleable: if above certain % don't schedule
