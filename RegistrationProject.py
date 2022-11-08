@@ -1,6 +1,7 @@
 import pandas as pd
 import datetime
 import DataStructures as ds
+import sys
 
 class Class:
 
@@ -330,7 +331,12 @@ def classSchedule(constraints_filename, students_filename):
 file = open("../basic/output.txt", "w")
 print(file)
 file.write("Course\tRoom\tTeacher\tTime\tStudents\n")
-schedule, globalStudentCount, score = classSchedule("demo_constraints.txt", "demo_studentprefs.txt")
+user_consts_file = sys.argv[0]
+user_prefs_file = sys.argv[1]
+if(user_consts_file != None & user_prefs_file != None):
+    schedule, globalStudentCount, score = classSchedule(user_consts_file, user_prefs_file)
+else:
+    schedule, globalStudentCount, score = classSchedule("demo_constraints.txt", "demo_studentprefs.txt")
 
 for time in schedule:
     for clss in time:
