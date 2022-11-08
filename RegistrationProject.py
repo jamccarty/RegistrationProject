@@ -333,7 +333,6 @@ print(file)
 file.write("Course\tRoom\tTeacher\tTime\tStudents\n")
 user_consts_file = sys.argv[1]
 user_prefs_file = sys.argv[2]
-print(user_prefs_file)
 if(user_consts_file != None & user_prefs_file != None):
     schedule, globalStudentCount, score = classSchedule(user_consts_file, user_prefs_file)
 else:
