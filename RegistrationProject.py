@@ -271,7 +271,7 @@ def classSchedule(constraints_filename, students_filename):
                 # print(studentPreferenceCount)
                 return schedule, globalStudentCount, globalStudentCount / (len(studentPrefLists) * 4)
 
-            clss = classRanks.popFront().data
+            clss = classRanks.popFront()
 
             skipTime = False
             skipRoom = False
@@ -287,7 +287,7 @@ def classSchedule(constraints_filename, students_filename):
                     skipTime = True
                     break
 
-                clss = classRanks.popFront().data
+                clss = classRanks.popFront()
             # if current professor has conflict, or the class conflicts with any class
             while profSchedules[classTeachers[clss.name]].contains(time) and not skipRoom:
                 #while profSchedules[classFacts[clss.name].professor].contains(time):
@@ -297,7 +297,7 @@ def classSchedule(constraints_filename, students_filename):
                     skipTime = True
                     break
 
-                clss = classRanks.popFront().data
+                clss = classRanks.popFront()
             
 
             if skipTime == True:
@@ -311,7 +311,7 @@ def classSchedule(constraints_filename, students_filename):
             
             profSchedules[clss.professor].append(time)
             while not room[0] == len(clss.enrolled) and not whoPrefers[clss.name].isEmpty():
-                x = whoPrefers[clss.name].popFront().data
+                x = whoPrefers[clss.name].popFront()
                 if(not studentSchedules[x].contains(time)):
                     clss.enrolled.append(x)
                     
