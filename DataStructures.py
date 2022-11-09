@@ -72,13 +72,19 @@ class LinkedList:
     
     # merge two linked lists so that A->B
     def merge(self, A):
-        self.head.prev = A.tail
-        A.tail.next = self.head
-        self.head = A.head
-        A.head = None
-        A.tail = None     
-        self.size += A.size
-        A.size = 0
+        if self.isEmpty():
+            self.head = A.head
+            self.tail = A.tail
+            A.head = None
+            A.tail = None
+        else:
+            self.head.prev = A.tail
+            A.tail.next = self.head
+            self.head = A.head
+            A.head = None
+            A.tail = None     
+            self.size += A.size
+            A.size = 0
 
     def contains(self, data):
         loc = self.head

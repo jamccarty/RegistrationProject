@@ -1,9 +1,10 @@
 class Student:
-    def __init__(self, id, year, major, preferredClassMajor):
+    def __init__(self, id, year, major, preferredClassMajor, accomodations):
         self.id = id
         self.year = year
         self.major = major
         self.prefMajor = preferredClassMajor
+        self.accomodations = accomodations
 
     def __lt__(self, other):
         if self.major == other.major:
@@ -68,6 +69,7 @@ class Class:
         self.preferredStudents = 0
         self.major = majorContributedTo
         self.domain = domainCanBeTaughtIn
+        self.needsAccessibility = False
     
     def notFull(self):
         return self.len(self.enrolled) - self.roomSize != 0

@@ -331,12 +331,14 @@ def classSchedule(constraints_filename, students_filename):
 file = open("output.txt", "w")
 print(file)
 file.write("Course\tRoom\tTeacher\tTime\tStudents\n")
-user_consts_file = sys.argv[1]
-user_prefs_file = sys.argv[2]
-if(user_consts_file != None & user_prefs_file != None):
-    schedule, globalStudentCount, score = classSchedule(user_consts_file, user_prefs_file)
+if len(sys.argv) >= 2:
+    user_consts_file = sys.argv[1]
+    user_prefs_file = sys.argv[2]
 else:
-    schedule, globalStudentCount, score = classSchedule("demo_constraints.txt", "demo_studentprefs.txt")
+    user_consts_file = "demo_constraints.txt"
+    user_prefs_file = "demo_studentprefs.txt"
+    
+schedule, globalStudentCount, score = classSchedule(user_consts_file, user_prefs_file)
 
 for time in schedule:
     for clss in time:

@@ -137,7 +137,7 @@ def studentsArray(studentsFilename):
         if len(pref) == 0:
             break
         preferences_integers = [int(p) for p in pref] #convert preferences to integers
-        students.append((i, year, major, preferences_integers))
+        students.append((i, year, major, preferences_integers, accomodations))
 
     file.close()
     return students
@@ -160,20 +160,24 @@ def classQ(studentsFilename, classes):
 
     for domain in classes:
         for clss in domain:
-            whoPrefers.append(ds.LinkedList())
-            tempClasses.append(clss)
+            if not clss is None:
+                whoPrefers.append(ds.LinkedList())
+                tempClasses.append(clss)
     
     # for each class in each student preference list, increment that classes preference level
     i = -1
     whoPrefers.append(ds.LinkedList()) #0 prefer class 0 which doesn't exist --> I don't know what this does and I'm too scared to change it
-    for (id, year, major, preferences) in studentPreferences[1:]:
+    for (id, year, major, preferences, accomodations) in studentPreferences[1:]:
         i += 1
         for pref in preferences:
-            whoPrefers[pref].append(mech.Student(id, year, major, pref)) #TODO use mech.Student() class to make sure sorting is correct
+            whoPrefers[pref].append(mech.Student(id, year, major, pref, accomodations))
+            if accomodations == True:
+                tempClasses[pref].needsAccessibility = True
 
     for clss in tempClasses:
         if not clss is None:
             classes[clss.domain.id][clss.name].preferredStudents = whoPrefers[clss.name].size
+            classes[clss.domain.id][clss.name].needsAccessibility = clss.needsAccessibility
 
     #sort each whoPrefers[class] linked list in this order: majorSenior > majorJunior > nonMajorSenior > nonMajorJunior > Soph > Fresh
     for i in range(len(whoPrefers))[1:]:
@@ -292,7 +296,7 @@ def classSchedule(constraints_filename, students_filename):
             if clss.name == 0:
                 continue
 
-            while profSchedules[clss.professor].contains(time):
+            while profSchedules[clss.professor].contains(time) or (clss.needsAccessibility == True and room.accessible):
                 holdClass.append(clss)
 
                 if classes[room.domain.id].isEmpty():

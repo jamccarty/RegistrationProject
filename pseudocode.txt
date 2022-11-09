@@ -4,12 +4,12 @@ Prioritize majors over nonmajors
 COMPLETE
 Prioritize seniors > juniors > soph > fresh
 
-INCOMPLETE
+COMPLETE
 Classify buildings into domains
     mostPreferredClass lists for each domains keep track of classes already shceduled
         if scheduled for one domain, don't schedule again in another
 
-INCOMPLETE
+COMPLETE
 Classify rooms as accessible or nonaccessible
     list of students who need accessible rooms -> Prioritize (small < 1%)
 
