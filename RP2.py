@@ -44,14 +44,32 @@ def parseConstraints(filename):
     numRooms = int(x[1]) #number of rooms total
     rooms = []
 
+    domains = []
+    dom_id = 0 #id for next added domain() in domains array, starts at 0
+    domainIndexDict = {}
+    classes = []
+
     # initialize rooms array -- array of tuples (room size, room id)
     # (this is so that after merge sorting, each size remains paired with correct room id)
     for line in lines[2:2 + numRooms]:
         x = line.split('\t')
         id = int(x[0])
         capacity = int(x[1])
-        domain = x[2]
+        domain = mech.domain(x[2], dom_id)
+        inDomains = False
+
+        for d in domains:
+            if d == domain:
+                inDomains = True
+
+        if not inDomains:
+            domains.append(domain)
+            classes.append([])
+            domainIndexDict.update({x[2]:dom_id})
+            dom_id += 1
+
         accessible = True if int(x[3]) == 1 else False
+        domain.id = domainIndexDict[domain.name]
         rooms.append(mech.Room(id, capacity, domain, accessible))
         loc += 1
     
@@ -59,28 +77,31 @@ def parseConstraints(filename):
     loc += 1
     x = lines[loc].split('\t')
     numClasses = int(x[1])
+
+
+    for i in range(len(classes)):
+        classes[i].append(None) #for 0 class, which does not exist
+        for c in range(numClasses):
+            classes[i].append(None)
     
     # split next line to get number of class teachers.
     # we can discard this -- just half number of classes
     loc += 1
     x = lines[loc].split('\t')
-    classTeachers = [] # array of classes indexed by classID (first is 0)
-    classTeachers.append(0) #there is no 0 class
+    # classTeachers = [] # array of classes indexed by classID (first is 0)
+    # classTeachers.append(0) #there is no 0 class
 
-    domains = []
     # adding correct professor for each class
     for i in range(numClasses):
         loc += 1
         tc = lines[loc].split('\t')
         requiredProfessor = int(tc[1])
         majorContributedTo = int(tc[2])
-        requiredDomain = tc[3]
-        if domains.count(requiredDomain) == 0:
-            domains.append(requiredDomain)
-        classTeachers.append(mech.classInfo(requiredProfessor, majorContributedTo, requiredDomain))
+        requiredDomain = mech.domain(tc[3], domainIndexDict[tc[3]])
+        classes[requiredDomain.id][i+1] = mech.Class(i+1, requiredProfessor, majorContributedTo, requiredDomain)
 
     file.close() #close file
-    return numTimeSlots, rooms, classTeachers, domains
+    return numTimeSlots, rooms, classes, numClasses
 
 '''
     generates an array of students
@@ -121,27 +142,26 @@ def studentsArray(studentsFilename):
     file.close()
     return students
 # 
+# modifies classes to be an array of LinkedList() objects, where each class[domain.id] = LinkedList() of classes
+# to be taught in that domain
 # params
 #   FILE OBJECT of studentprefs.txt
 #   number of classes as input
 # returns
-#   mostPreferred -- LinkedList of classes organized in descending order by how preferred they are
 #   studentPreferences -- array of arrays. Outer array is indexed by student id, inner arrays are student preference lists
 #   whoPrefers -- array of LinkedLists of students who prefer a class, indexed by class
-def classQ(studentsFilename, numClasses):
-    # array of tuples for merge sort reasons --> will turn into LinkedList() later
-    # will be organized (preference level of class, class id)
-    mostPreferredClasses = []
-
+def classQ(studentsFilename, classes):
     studentPreferences = studentsArray(studentsFilename)
 
     #array of LinkedLists of all students who prefer class, indexed by class
     whoPrefers = []
     whoPrefers.append(ds.LinkedList()) #append blank -- no class 0
+    tempClasses = [] #temporary array of all classes -- will be discarded with stack frame
 
-    for i in range(numClasses):
-        mostPreferredClasses.append((0, i))
-        whoPrefers.append(ds.LinkedList())
+    for domain in classes:
+        for clss in domain:
+            whoPrefers.append(ds.LinkedList())
+            tempClasses.append(clss)
     
     # for each class in each student preference list, increment that classes preference level
     i = -1
@@ -151,24 +171,23 @@ def classQ(studentsFilename, numClasses):
         for pref in preferences:
             whoPrefers[pref].append(mech.Student(id, year, major, pref)) #TODO use mech.Student() class to make sure sorting is correct
 
-    #sort whoPrefers linked list in this order:
+    for clss in tempClasses:
+        if not clss is None:
+            classes[clss.domain.id][clss.name].preferredStudents = whoPrefers[clss.name].size
+
+    #sort each whoPrefers[class] linked list in this order: majorSenior > majorJunior > nonMajorSenior > nonMajorJunior > Soph > Fresh
     for i in range(len(whoPrefers))[1:]:
         arr = whoPrefers[i].toArray()
         mergeSort(arr, 0)
         whoPrefers[i] = ds.arrayToLinkedList(arr)       
 
-    # mergeSort the classes based on preference level
-    mergeSort(mostPreferredClasses, 1)
+    for i in range(len(classes)):
+        classes[i] = ds.arrayToLinkedList(classes[i])
+        classes[i] = classes[i].toArray()
+        mergeSort(classes[i], 1)
+        classes[i] = ds.arrayToLinkedList(classes[i])
 
-    # turn mostPreferredClasses array from an array of tuples to a linked list of Class() objects
-    #(will make O(1) removal/re-adding sections when conflicts)
-    mostPreferred = ds.LinkedList()
-    for (pref, id) in mostPreferredClasses:
-        c = mech.Class(id)
-        c.preferredStudents = pref
-        mostPreferred.append(c)
-
-    return mostPreferred, studentPreferences, whoPrefers
+    return studentPreferences, whoPrefers
 
 '''
     generates array of LinkedList, where each LinkedList can hold time slots [person_index] has a class
@@ -245,16 +264,16 @@ def classSchedule(constraints_filename, students_filename):
         #classFacts[class_id].major - major class_id contributes to
         #classFacts[class_id].domain - domain class_id must be taught in
     #domains - array of all domains TODO: do something with the domains -- possible list of maxRoomSizes for all domains?                                   
-    numTimeSlots, maxRoomSize, classFacts, domains = parseConstraints(constraints_filename)
+    numTimeSlots, maxRoomSize, classes, numClasses = parseConstraints(constraints_filename)
     mergeSort(maxRoomSize, 0)
     
     # initialize preferred students and Class ranked lists
-    classRanks, studentPrefLists, whoPrefers = classQ(students_filename, len(classFacts))
+    studentPrefLists, whoPrefers = classQ(students_filename, classes)
     globalStudentCount = 0
 
     # innit student's schedules
     studentSchedules = generateSchedules(len(studentPrefLists))
-    profSchedules = generateSchedules(int(len(classFacts) / 2))
+    profSchedules = generateSchedules(int(numClasses / 2))
 
     holdClass = ds.LinkedList()
     schedule = []
@@ -264,32 +283,30 @@ def classSchedule(constraints_filename, students_filename):
 
     for room in maxRoomSize:
         for time in range(numTimeSlots):
-            if classRanks.isEmpty():
+            if classes[room.domain.id].isEmpty():
                 return schedule, globalStudentCount, globalStudentCount / ((len(studentPrefLists) - 1) * 4)
 
-            clss = classRanks.popFront().data
+            clss = classes[room.domain.id].popFront().data
 
             skipTime = False
             if clss.name == 0:
                 continue
 
-            while profSchedules[classFacts[clss.name].professor].contains(time):
+            while profSchedules[clss.professor].contains(time):
                 holdClass.append(clss)
 
-                if classRanks.isEmpty():
+                if classes[room.domain.id].isEmpty():
                     skipTime = True
                     break
 
-                clss = classRanks.popFront().data
+                clss = classes[room.domain.id].popFront().data
 
             if skipTime == True:
-                classRanks = holdClass
+                classes[room.domain.id] = holdClass
                 continue
 
             if not holdClass.isEmpty():
-                classRanks.merge(holdClass)
-
-            clss.professor = classFacts[clss.name].professor
+                classes[room.domain.id].merge(holdClass)
             
             profSchedules[clss.professor].append(time)
             while not room.capacity == len(clss.enrolled) and not whoPrefers[clss.name].isEmpty():
@@ -307,12 +324,12 @@ def classSchedule(constraints_filename, students_filename):
 
     return schedule, globalStudentCount, globalStudentCount / ((len(studentPrefLists) - 1) * 4)
 
-mostPreferred, studentPreferences, whoPrefers = classQ("mod_studentprefs_demo.txt", 14)
-numTimeSlots, rooms, classFacts, domains = parseConstraints("mod_constraints_demo.txt")
+# numTimeSlots, maxRoomSize, classes, domains = parseConstraints("scripts/esemtinyc.txt")
+# studentPreferences, whoPrefers = classQ("scripts/esemtinyp.txt", classes)
 
-file = open("../basic/output.txt", "w")
+file = open("mod_output.txt", "w")
 file.write("Course\tRoom\tTeacher\tTime\tStudents\n")
-schedule, globalStudentCount, score = classSchedule("mod_constraints_demo.txt", "mod_studentprefs_demo.txt")
+schedule, globalStudentCount, score = classSchedule("scripts/esemtinyc.txt", "scripts/esemtinyp.txt")
 
 for time in schedule:
     for clss in time:

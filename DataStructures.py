@@ -77,6 +77,8 @@ class LinkedList:
         self.head = A.head
         A.head = None
         A.tail = None     
+        self.size += A.size
+        A.size = 0
 
     def contains(self, data):
         loc = self.head
@@ -96,6 +98,7 @@ def arrayToLinkedList(array):
     LL = LinkedList()
 
     for x in array:
-        LL.append(x)
+        if not x is None:
+            LL.append(x)
     
     return LL

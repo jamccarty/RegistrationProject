@@ -285,7 +285,7 @@ def classSchedule(constraints_filename, students_filename):
     # df.index = [f'room {r[1]}' for r in maxRoomSize]
     return schedule, globalStudentCount, globalStudentCount / ((len(studentPrefLists) - 1) * 4)
 
-file = open("../basic/output.txt", "w")
+file = open("output.txt", "w")
 print(file)
 file.write("Course\tRoom\tTeacher\tTime\tStudents\n")
 schedule, globalStudentCount, score = classSchedule("demo_constraints.txt", "demo_studentprefs.txt")

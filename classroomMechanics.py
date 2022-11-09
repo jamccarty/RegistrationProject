@@ -59,19 +59,42 @@ class Student:
         return f"{self.id}"
 
 class Class:
-    def __init__(self, class_name):
+    def __init__(self, class_name, requiredProfessor, majorContributedTo, domainCanBeTaughtIn):
         self.name = class_name
         self.enrolled = []
-        self.professor = -1
+        self.professor = requiredProfessor
         self.time = -1
         self.room = -1
         self.preferredStudents = 0
+        self.major = majorContributedTo
+        self.domain = domainCanBeTaughtIn
     
     def notFull(self):
         return self.len(self.enrolled) - self.roomSize != 0
 
+    def __gt__(self, other):
+        return self.preferredStudents > other.preferredStudents
+    
+    def __lt__(self, other):
+        return self.preferredStudents < other.preferredStudents
+
+    def __ge__(self, other):
+        return self.preferredStudents >= other.preferredStudents
+
+    def __le__(self, other):
+        return self.preferredStudents <= other.preferredStudents
+
+    def __eq__(self, other):
+        return self.preferredStudents == other.preferredStudents
+
+    def __ne__(self, other):
+        return self.preferredStudents != other.preferredStudents
+
     def __str__(self):
-        return f"{self.name}"
+        students = ""
+        for s in self.enrolled:
+            students += f"{s} "
+        return f"{self.name}\t{self.room}\t{self.professor}\t{self.time}\t{students}"
 
 class classInfo:
     def __init__(self, requiredProfessor, majorContributedTo, domainCanBeTaughtIn):
@@ -81,6 +104,23 @@ class classInfo:
 
     def __str__(self):
         return f"prof: {self.professor} major: {self.major} domain {self.domain}"
+
+class domain:
+    def __init__(self, name, id):
+        self.name = name
+        self.id = id
+
+    def __str__(self):
+        return f"{self.name}"
+
+    def __eq__(self, other):
+        return self.name == other.name
+
+    def __ne__(self, other):
+        return self.name != other.name
+
+    def __str__(self):
+        return f"{self.name}, {self.id}"
 
 class Room:
     def __init__(self, id, capacity, domain, accessible):
@@ -108,7 +148,7 @@ class Room:
         return self.capacity <= other.capacity
 
     def __str__(self):
-        return f"{self.id}"
+        return f"{self.id} - {self.domain}"
 
 # year3NonMajor1 = Student(1, 3, 1, 3) #id, class year, major preferredClassMajor
 # year3NonMajor2 = Student(2, 3, 2, 3)
