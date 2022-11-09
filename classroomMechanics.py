@@ -60,7 +60,7 @@ class Student:
         return f"{self.id}"
 
 class Class:
-    def __init__(self, class_name, requiredProfessor, majorContributedTo, domainCanBeTaughtIn):
+    def __init__(self, class_name, requiredProfessor, majorContributedTo, domainCanBeTaughtIn, isEsem):
         self.name = class_name
         self.enrolled = []
         self.professor = requiredProfessor
@@ -70,6 +70,7 @@ class Class:
         self.major = majorContributedTo
         self.domain = domainCanBeTaughtIn
         self.needsAccessibility = False
+        self.isEsem = isEsem
     
     def notFull(self):
         return self.len(self.enrolled) - self.roomSize != 0

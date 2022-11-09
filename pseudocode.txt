@@ -13,7 +13,7 @@ COMPLETE
 Classify rooms as accessible or nonaccessible
     list of students who need accessible rooms -> Prioritize (small < 1%)
 
-INCOMPLETE
+COMPLETE
 Every freshman needs an Esem -> Esem specific timeslot (time 0)
 
 INCOMPLETE

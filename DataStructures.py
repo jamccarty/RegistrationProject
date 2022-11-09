@@ -26,7 +26,7 @@ class LinkedList:
         array = []
 
         while not self.isEmpty():
-            array.append(self.popFront().data)
+            array.append(self.popFront())
 
         return array
 
@@ -62,13 +62,13 @@ class LinkedList:
             n = self.head
             self.head = None
             self.tail = None
-            return n
+            return n.data
         
         n = self.head
 
         if not n.next == None:
             self.head = n.next
-        return n
+        return n.data
     
     # merge two linked lists so that A->B
     def merge(self, A):
@@ -108,3 +108,10 @@ def arrayToLinkedList(array):
             LL.append(x)
     
     return LL
+
+def removeBlanks(array):
+    new_array = []
+    for x in array:
+        if not x is None:
+            new_array.append(x)
+    return new_array

@@ -98,7 +98,8 @@ def parseConstraints(filename):
         requiredProfessor = int(tc[1])
         majorContributedTo = int(tc[2])
         requiredDomain = mech.domain(tc[3], domainIndexDict[tc[3]])
-        classes[requiredDomain.id][i+1] = mech.Class(i+1, requiredProfessor, majorContributedTo, requiredDomain)
+        isEsem = True if int(tc[4]) == 1 else False
+        classes[requiredDomain.id][i+1] = mech.Class(i+1, requiredProfessor, majorContributedTo, requiredDomain, isEsem)
 
     file.close() #close file
     return numTimeSlots, rooms, classes, numClasses
@@ -150,7 +151,7 @@ def studentsArray(studentsFilename):
 # returns
 #   studentPreferences -- array of arrays. Outer array is indexed by student id, inner arrays are student preference lists
 #   whoPrefers -- array of LinkedLists of students who prefer a class, indexed by class
-def classQ(studentsFilename, classes):
+def classQ(studentsFilename, classes, numClasses):
     studentPreferences = studentsArray(studentsFilename)
 
     #array of LinkedLists of all students who prefer class, indexed by class
@@ -158,12 +159,19 @@ def classQ(studentsFilename, classes):
     whoPrefers.append(ds.LinkedList()) #append blank -- no class 0
     tempClasses = [] #temporary array of all classes -- will be discarded with stack frame
 
+    esems = []
+
+    for d in range(len(classes)): #for number of domains
+        esems.append([])
+        esems[d].append(None) #0 class does not exist
+        for c in range(numClasses): #for each class
+            esems[d].append(None)
+
     for domain in classes:
         for clss in domain:
             if not clss is None:
                 whoPrefers.append(ds.LinkedList())
                 tempClasses.append(clss)
-    
     # for each class in each student preference list, increment that classes preference level
     i = -1
     whoPrefers.append(ds.LinkedList()) #0 prefer class 0 which doesn't exist --> I don't know what this does and I'm too scared to change it
@@ -176,22 +184,34 @@ def classQ(studentsFilename, classes):
 
     for clss in tempClasses:
         if not clss is None:
-            classes[clss.domain.id][clss.name].preferredStudents = whoPrefers[clss.name].size
-            classes[clss.domain.id][clss.name].needsAccessibility = clss.needsAccessibility
+            if clss.isEsem == True:
+                esems[clss.domain.id][clss.name] = clss
+                esems[clss.domain.id][clss.name].preferredStudents = whoPrefers[clss.name].size
+                esems[clss.domain.id][clss.name].needsAccessibility = clss.needsAccessibility
+
+                classes[clss.domain.id][clss.name] = None
+            else:
+                classes[clss.domain.id][clss.name].preferredStudents = whoPrefers[clss.name].size
+                classes[clss.domain.id][clss.name].needsAccessibility = clss.needsAccessibility
 
     #sort each whoPrefers[class] linked list in this order: majorSenior > majorJunior > nonMajorSenior > nonMajorJunior > Soph > Fresh
     for i in range(len(whoPrefers))[1:]:
         arr = whoPrefers[i].toArray()
         mergeSort(arr, 0)
-        whoPrefers[i] = ds.arrayToLinkedList(arr)       
+        whoPrefers[i] = ds.arrayToLinkedList(arr)      
 
     for i in range(len(classes)):
-        classes[i] = ds.arrayToLinkedList(classes[i])
-        classes[i] = classes[i].toArray()
+        classes[i] = ds.removeBlanks(classes[i])
         mergeSort(classes[i], 1)
         classes[i] = ds.arrayToLinkedList(classes[i])
 
-    return studentPreferences, whoPrefers
+        esems[i] = ds.removeBlanks(esems[i])
+        mergeSort(esems[i], 1)
+        esems[i] = ds.arrayToLinkedList(esems[i])
+
+        print(esems[i])
+
+    return studentPreferences, whoPrefers, esems
 
 '''
     generates array of LinkedList, where each LinkedList can hold time slots [person_index] has a class
@@ -272,7 +292,7 @@ def classSchedule(constraints_filename, students_filename):
     mergeSort(maxRoomSize, 0)
     
     # initialize preferred students and Class ranked lists
-    studentPrefLists, whoPrefers = classQ(students_filename, classes)
+    studentPrefLists, whoPrefers, esems = classQ(students_filename, classes, numClasses)
     globalStudentCount = 0
 
     # innit student's schedules
@@ -290,7 +310,10 @@ def classSchedule(constraints_filename, students_filename):
             if classes[room.domain.id].isEmpty():
                 return schedule, globalStudentCount, globalStudentCount / ((len(studentPrefLists) - 1) * 4)
 
-            clss = classes[room.domain.id].popFront().data
+            if not esems[room.domain.id].isEmpty() and time == 0:
+                clss = esems[room.domain.id].popFront()
+            else:
+                clss = classes[room.domain.id].popFront()
 
             skipTime = False
             if clss.name == 0:
@@ -303,7 +326,7 @@ def classSchedule(constraints_filename, students_filename):
                     skipTime = True
                     break
 
-                clss = classes[room.domain.id].popFront().data
+                clss = classes[room.domain.id].popFront()
 
             if skipTime == True:
                 classes[room.domain.id] = holdClass
@@ -314,7 +337,7 @@ def classSchedule(constraints_filename, students_filename):
             
             profSchedules[clss.professor].append(time)
             while not room.capacity == len(clss.enrolled) and not whoPrefers[clss.name].isEmpty():
-                x = whoPrefers[clss.name].popFront().data.id #student id
+                x = whoPrefers[clss.name].popFront().id #student id
                 if(not studentSchedules[x].contains(time)):
                     clss.enrolled.append(x)
                     
