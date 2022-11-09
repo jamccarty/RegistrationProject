@@ -66,7 +66,7 @@ def parseConstraints(filename):
     loc += 1
     x = lines[loc].split('\t')
     classTeachers = [] # array of classes indexed by professor (first is 0)
-    classTeachers.append(0) #there is no 0 class
+    # classTeachers.append(0) #there is no 0 class # TODO: MAYBE UNDO THIS LATER IF SHIT BREAKS???
 
     # adding correct professor for each class
     for i in range(numClasses):
@@ -97,6 +97,7 @@ def classQ(studentsFilename, numClasses):
     for i in range(numClasses):
         mostPreferredClasses.append((0, i))
         whoPrefers.append(ds.LinkedList())
+    # print(whoPrefers)
 
     file = open(studentsFilename)
 
@@ -124,7 +125,8 @@ def classQ(studentsFilename, numClasses):
 
     # for each class in each student preference list, increment that classes preference level
     i = -1
-    whoPrefers.append(0) #0 prefer class 0 which doesn't exist --> I don't know what this does but I'm too scared to change it
+    # TODO: if shit breaks uncomment the whoPrefers.append(0)
+    # whoPrefers.append(0) #0 prefer class 0 which doesn't exist --> I don't know what this does but I'm too scared to change it
     for student in students:
         i += 1
         for pref in student:
@@ -223,20 +225,28 @@ def mergeSort(arr, dir):
         ret, a 2D Array, where for each ret[i,j], it gives the percentage of students in class i
         who want to take class j
 '''
+# TODO: WHY ARE THERE 15 CLASSES???? THERE ARE 14 CLASSES??
 def depart_conflicts(classes):
     # initialize the returned matrix
     ret = [[0 for i in range(len(classes))] for j in range(len(classes))]
-
+    # print(classes)
+    print(len(classes))
     for i in range(len(classes)):
         classA = classes[i]
         for j in range(len(classes)):
             classB = classes[j]
+            # print(j)
+            # print(classB)
+
             itt = classB.head
             while(itt != None):
                 if classA.contains(itt.data):
                     ret[i][j] += 1
                 itt = itt.next
-            ret[i][j] = ret[i][j] / (classA.size)
+            if classA.size != 0:    
+                ret[i][j] = ret[i][j] / (classA.size)
+            else:
+                ret[i][j] = 0
 
     return ret
 
@@ -248,6 +258,8 @@ def classSchedule(constraints_filename, students_filename):
     mergeSort(maxRoomSize, 0)
     
     # initialize preferred students and Class ranked lists
+    print(f"Number of Classes {len(classTeachers)}")
+    
     classRanks, studentPrefLists, whoPrefers = classQ(students_filename, len(classTeachers))
     classConflicts = depart_conflicts(whoPrefers)
     globalStudentCount = 0
@@ -278,8 +290,10 @@ def classSchedule(constraints_filename, students_filename):
             
             # checks every other class at our given time. there is a class where 75% of the students want to take that class, 
             # do not select the current class and move to the next class
-            for r in maxRoomSize[0:room]:
-                if(classConflicts[clss.name][schedule[r][time]] >= 0.75):
+            # print(maxRoomSize.index(room))
+            for r in maxRoomSize[0:maxRoomSize.index(room)]:
+                # TODO: this keeps saying it's out of bounds and I don't know why
+                if(classConflicts[clss.name][schedule[r[1]][time]] >= 0.75):
                     holdClass.append(clss)
                     skipRoom = True
                 
@@ -328,9 +342,9 @@ def classSchedule(constraints_filename, students_filename):
     # df.index = [f'room {r[1]}' for r in maxRoomSize]
     return schedule, globalStudentCount, globalStudentCount / ((len(studentPrefLists) - 1) * 4)
 
-file = open("output.txt", "w")
+file = open("output.txt", "wb")
 print(file)
-file.write("Course\tRoom\tTeacher\tTime\tStudents\n")
+file.write(bytes("Course\tRoom\tTeacher\tTime\tStudents\n", "UTF-8"))
 if len(sys.argv) >= 2:
     user_consts_file = sys.argv[1]
     user_prefs_file = sys.argv[2]
@@ -342,6 +356,6 @@ schedule, globalStudentCount, score = classSchedule(user_consts_file, user_prefs
 
 for time in schedule:
     for clss in time:
-        file.write(f"{clss}\n")
+        file.write(bytes(f"{clss}\n", "UTF-8"))
 
 file.close()
