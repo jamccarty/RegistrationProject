@@ -165,3 +165,9 @@ def mergeSort(arr, dir):
             arr[k] = R[j]
             j += 1
             k += 1
+
+def printLL(LL):
+    loc = LL.head
+    while loc != None:
+        print(f"{loc.data} -> ", end='')
+        loc = loc.next
