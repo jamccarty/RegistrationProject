@@ -150,7 +150,7 @@ foreach my $student ((1..$numstudents)) {
 		$classesperstudent = $classesperstudent - 1;
 	}
 	for my $i ((1..$classesperstudent)) {
-		my $wantclass = ceil(rand() * $numclasses) + $numesems;
+		my $wantclass = ceil(rand() * $nonesems) + $numesems;
 		while (inarray($wantclass, \@chosenclasses)) {
 			$wantclass = ceil(rand() * $numclasses);
 		}
