@@ -142,6 +142,44 @@ def studentsArray(studentsFilename):
 
     file.close()
     return students
+
+def accessibleSchedule(schedule, rooms, numTimes, globalStudentCount, access_classes, access_esems, whoPrefers, student_schedules, prof_schedules, notAddedDict):
+    access_rooms = []
+    for i in range(len(access_classes)):
+        access_classes[i] = ds.arrayToLinkedList(access_classes[i])
+
+    for r in rooms:
+        if r.accessible == True:
+            access_rooms.append(r)
+
+    mergeSort(access_rooms, 1)
+
+    taken_time_room_combos = []
+
+    for r in access_rooms:
+        domain = r.domain.id
+        for c in access_esems[domain]:
+            if c.preferredStudents <= r.capacity and not prof_schedules[c.professor].contains(t):
+                if c.name in notAddedDict:
+                    notAddedDict.pop(c.name)
+                schedule[r.id][0] = c
+                c.time = 0
+                c.room = r
+                for x in whoPrefers[c.name]:
+                    student = x.id
+                    c.enrolled.append(student)
+                    student_schedules[student.id].append(0)
+                    taken_time_room_combos.append((0, r.id))
+            else:
+                notAddedDict.update({c.name:'no accessible rooms'})
+
+    schedule, globalStudentCount = miniSchedule(schedule, access_classes, access_rooms, range(numTimes)[1:], 
+                                                globalStudentCount, student_schedules, prof_schedules, 
+                                                whoPrefers, taken_time_room_combos, notAddedDict)
+
+    return taken_time_room_combos
+
+
 # 
 # modifies classes to be an array of LinkedList() objects, where each class[domain.id] = LinkedList() of classes
 # to be taught in that domain
@@ -156,62 +194,76 @@ def classQ(studentsFilename, classes, numClasses):
 
     #array of LinkedLists of all students who prefer class, indexed by class
     whoPrefers = []
-    whoPrefers.append(ds.LinkedList()) #append blank -- no class 0
+    whoPrefers.append([]) #append blank -- no class 0
     tempClasses = [] #temporary array of all classes -- will be discarded with stack frame
 
     esems = []
 
+    access_esems = [] #esems that need to be accessible, indexed by domain
+    access_classes = [] #classes that need to be accessible, indexed by domain
+
     for d in range(len(classes)): #for number of domains
         esems.append([])
         esems[d].append(None) #0 class does not exist
+
+        access_esems.append([]) #don't need to be indexed
+        access_classes.append([]) #don't need to be indexed
+
         for c in range(numClasses): #for each class
             esems[d].append(None)
 
     for domain in classes:
         for clss in domain:
             if not clss is None:
-                whoPrefers.append(ds.LinkedList())
+                whoPrefers.append([])
                 tempClasses.append(clss)
     # for each class in each student preference list, increment that classes preference level
     i = -1
-    whoPrefers.append(ds.LinkedList()) #0 prefer class 0 which doesn't exist --> I don't know what this does and I'm too scared to change it
+    whoPrefers.append([]) #0 prefer class 0 which doesn't exist --> I don't know what this does and I'm too scared to change it
     for (id, year, major, preferences, accomodations) in studentPreferences[1:]:
         i += 1
         for pref in preferences:
             whoPrefers[pref].append(mech.Student(id, year, major, pref, accomodations))
             if accomodations == True:
-                tempClasses[pref].needsAccessibility = True
+                d = tempClasses[pref].domain.id
+                # tempClasses[pref].needsAccessibility = True
+                if tempClasses[pref].isEsem == True:
+                    access_esems[d].append(tempClasses[pref])
+                else:
+                    access_classes[d].append(tempClasses[pref])
+                tempClasses[pref] = None #no longer in tempClasses list -- in classes that need accessibility
 
     for clss in tempClasses:
         if not clss is None:
             if clss.isEsem == True:
                 esems[clss.domain.id][clss.name] = clss
-                esems[clss.domain.id][clss.name].preferredStudents = whoPrefers[clss.name].size
-                esems[clss.domain.id][clss.name].needsAccessibility = clss.needsAccessibility
+                esems[clss.domain.id][clss.name].preferredStudents = len(whoPrefers[clss.name])
+                # esems[clss.domain.id][clss.name].needsAccessibility = clss.needsAccessibility
 
                 classes[clss.domain.id][clss.name] = None
+
+
             else:
-                classes[clss.domain.id][clss.name].preferredStudents = whoPrefers[clss.name].size
-                classes[clss.domain.id][clss.name].needsAccessibility = clss.needsAccessibility
+                classes[clss.domain.id][clss.name].preferredStudents = len(whoPrefers[clss.name])
+                # classes[clss.domain.id][clss.name].needsAccessibility = clss.needsAccessibility
 
     #sort each whoPrefers[class] linked list in this order: majorSenior > majorJunior > nonMajorSenior > nonMajorJunior > Soph > Fresh
     for i in range(len(whoPrefers))[1:]:
-        arr = whoPrefers[i].toArray()
-        mergeSort(arr, 0)
-        whoPrefers[i] = ds.arrayToLinkedList(arr)      
+        mergeSort(whoPrefers[i], 0)   
 
     for i in range(len(classes)):
         classes[i] = ds.removeBlanks(classes[i])
-        mergeSort(classes[i], 1)
+        mergeSort(classes[i], 0)
         classes[i] = ds.arrayToLinkedList(classes[i])
 
         esems[i] = ds.removeBlanks(esems[i])
-        mergeSort(esems[i], 1)
+        mergeSort(esems[i], 0)
         esems[i] = ds.arrayToLinkedList(esems[i])
 
-        print(esems[i])
+        mergeSort(access_esems[i], 1)
+        mergeSort(access_classes[i], 1)
 
-    return studentPreferences, whoPrefers, esems
+    return studentPreferences, whoPrefers, esems, access_classes, access_esems
 
 '''
     generates array of LinkedList, where each LinkedList can hold time slots [person_index] has a class
@@ -279,6 +331,110 @@ def mergeSort(arr, dir):
             j += 1
             k += 1
  
+
+def miniSchedule(schedule, classes, maxRoomSize, timeSlots, globalStudentCount, studentSchedules, profSchedules, whoPrefers, taken_time_room_combos, notAddedDict):
+    holdClass = ds.LinkedList()
+    
+    for room in maxRoomSize:
+        for time in timeSlots:
+            if (time, room.id) in taken_time_room_combos:
+                continue
+            if classes[room.domain.id].isEmpty():
+                return schedule, globalStudentCount
+
+            clss = classes[room.domain.id].popFront()
+
+            skipTime = False
+            if clss.name == 0:
+                continue
+
+            while profSchedules[clss.professor].contains(time):
+                holdClass.append(clss)
+
+                notAddedDict.update({clss.name : 'professor schedule conflict'})
+
+                if classes[room.domain.id].isEmpty():
+                    skipTime = True
+                    break
+            
+                clss = classes[room.domain.id].popFront()
+
+            if skipTime == True:
+                classes[room.domain.id] = holdClass
+                continue
+            
+            if clss.name in notAddedDict:
+                notAddedDict.pop(clss.name)
+
+            if not holdClass.isEmpty():
+                classes[room.domain.id].merge(holdClass)
+            
+            profSchedules[clss.professor].append(time)
+            for student in whoPrefers[clss.name]:
+                x = student.id
+                if len(clss.enrolled) == room.capacity:
+                    break
+                if(not studentSchedules[x].contains(time)):
+                    clss.enrolled.append(x)
+                    
+                    studentSchedules[x].append(x)
+                    globalStudentCount+=1
+
+            clss.room = room.id
+            clss.time = time
+            schedule[clss.room - 1][time] = clss
+
+    return schedule, globalStudentCount
+
+def conflictSchedule(schedule, whoPrefers, studentSchedules, profSchedules, globalStudentCount):
+    for r in range(len(schedule)):
+        for time in range(len(schedule[r][1:])): #non esems
+            currClass = schedule[r][time]
+            if currClass is None:
+                continue
+            room = currClass.room
+            maxSwappedClassStudents = []
+            maxSwapTime = time
+
+            for t2 in range(len(schedule[r][1:time])):
+                curSwapStudents = []
+                swapClass = schedule[r][t2]
+                if swapClass is None:
+                    continue
+                if profSchedules[swapClass.name].contains(time):
+                    break
+                for student in whoPrefers:
+                    x = student.id
+                    if not studentSchedules[x].contains(time):
+                        curSwapStudents.append(x)
+                if curSwapStudents > room.capacity:
+                    break
+                if curSwapStudents > maxSwappedClassStudents:
+                    maxSwappedClassStudents = curSwapStudents
+                    maxSwapTime = t2
+            
+            if len(maxSwappedClassStudents) > len(currClass.enrolled):
+                swapClass = schedule[r][maxSwapTime]
+                globalStudentCount -= len(swapClass.enrolled)
+                globalStudentCount -= len(currClass.enrolled)
+                schedule[r][maxSwapTime] = currClass
+                schedule[r][time] = swapClass
+                schedule[r][maxSwapTime].schedule = maxSwappedClassStudents
+
+                for x in maxSwappedClassStudents:
+                    studentSchedules[x].remove(maxSwapTime)
+                    studentSchedules[x].append(time)
+                
+                for x in swapClass.enrolled:
+                    studentSchedules[x].remove(time)
+                    if not studentSchedules[x].contains(maxSwapTime):
+                        studentSchedules[x].append(maxSwapTime)
+                    else:
+                        schedule[r][maxSwapTime].enrolled.remove(x)
+
+                globalStudentCount += schedule[r][maxSwapTime].enrolled + len(maxSwappedClassStudents)
+
+
 def classSchedule(constraints_filename, students_filename):
     #numTimeSlots - integer, number of time slots
     #rooms, unsorted linked list of rooms and associated sizes (size, room#)
@@ -292,72 +448,50 @@ def classSchedule(constraints_filename, students_filename):
     mergeSort(maxRoomSize, 0)
     
     # initialize preferred students and Class ranked lists
-    studentPrefLists, whoPrefers, esems = classQ(students_filename, classes, numClasses)
+    studentPrefLists, whoPrefers, esems, access_classes, access_esems = classQ(students_filename, classes, numClasses)
     globalStudentCount = 0
 
     # innit student's schedules
     studentSchedules = generateSchedules(len(studentPrefLists))
     profSchedules = generateSchedules(int(numClasses / 2))
 
-    holdClass = ds.LinkedList()
     schedule = []
 
-    for room in maxRoomSize:
+    for r in range(len(maxRoomSize)):
         schedule.append([])
+        for t in range(numTimeSlots):
+            schedule[r].append(None) 
 
-    for room in maxRoomSize:
-        for time in range(numTimeSlots):
-            if classes[room.domain.id].isEmpty():
-                return schedule, globalStudentCount, globalStudentCount / ((len(studentPrefLists) - 1) * 4)
+    notAddedDict = {} #dictionary of reasons for why each unadded class went unadded
+    taken_time_room_combos = accessibleSchedule(schedule, maxRoomSize, numTimeSlots, globalStudentCount,
+                                                access_classes, access_esems, whoPrefers, 
+                                                studentSchedules, profSchedules, notAddedDict)
 
-            if not esems[room.domain.id].isEmpty() and time == 0:
-                clss = esems[room.domain.id].popFront()
-            else:
-                clss = classes[room.domain.id].popFront()
+    #schedule esems for 0 time slot
+    schedule, globalStudentCount = miniSchedule(schedule, esems, maxRoomSize, [0], 
+                                                globalStudentCount, studentSchedules, profSchedules, 
+                                                whoPrefers, taken_time_room_combos, notAddedDict)
 
-            skipTime = False
-            if clss.name == 0:
-                continue
+    #0 non-accomodations classes for all other time slots
+    schedule, globalStudentCount = miniSchedule(schedule, classes, maxRoomSize, range(numTimeSlots)[1:],
+                                                globalStudentCount, studentSchedules, profSchedules, 
+                                                whoPrefers, taken_time_room_combos, notAddedDict)
 
-            while profSchedules[clss.professor].contains(time) or (clss.needsAccessibility == True and room.accessible):
-                holdClass.append(clss)
+    conflictSchedule(schedule, whoPrefers, studentSchedules, profSchedules, globalStudentCount)
 
-                if classes[room.domain.id].isEmpty():
-                    skipTime = True
-                    break
+    return schedule, globalStudentCount, globalStudentCount / ((len(studentPrefLists) - 1) * 4), notAddedDict
 
-                clss = classes[room.domain.id].popFront()
-
-            if skipTime == True:
-                classes[room.domain.id] = holdClass
-                continue
-
-            if not holdClass.isEmpty():
-                classes[room.domain.id].merge(holdClass)
-            
-            profSchedules[clss.professor].append(time)
-            while not room.capacity == len(clss.enrolled) and not whoPrefers[clss.name].isEmpty():
-                x = whoPrefers[clss.name].popFront().id #student id
-                if(not studentSchedules[x].contains(time)):
-                    clss.enrolled.append(x)
-                    
-                    studentSchedules[x].append(x)
-                    globalStudentCount+=1
-
-            clss.room = room.id
-            clss.time = time
-            schedule[clss.room - 1].append(clss)
-            
-
-    return schedule, globalStudentCount, globalStudentCount / ((len(studentPrefLists) - 1) * 4)
-
-# numTimeSlots, maxRoomSize, classes, domains = parseConstraints("scripts/esemtinyc.txt")
+numTimeSlots, maxRoomSize, classes, domains = parseConstraints("scripts/esemtinyc.txt")
 # studentPreferences, whoPrefers = classQ("scripts/esemtinyp.txt", classes)
 
-file = open("mod_output.txt", "w")
-file.write("Course\tRoom\tTeacher\tTime\tStudents\n")
-schedule, globalStudentCount, score = classSchedule("scripts/esemtinyc.txt", "scripts/esemtinyp.txt")
+file = open("mod_output.txt", "wb")
+file.write(bytes("Course\tRoom\tTeacher\tTime\tStudents\n", "UTF-8"))
+schedule, globalStudentCount, score, notAddedDict = classSchedule("scripts/esemtinyc.txt", "scripts/esemtinyp.txt")
 
 for time in schedule:
     for clss in time:
-        file.write(f"{clss}\n")
+        if not clss is None:
+            file.write(bytes(f"{clss}\n", "UTF-8"))
+
+print(score)
+print(notAddedDict)

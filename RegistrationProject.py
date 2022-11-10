@@ -213,33 +213,7 @@ def mergeSort(arr, dir):
             arr[k] = R[j]
             j += 1
             k += 1
-
-'''
-    Given two classes, A and B, calculate how much student overlap they have. 
-    Params: 
-        classes, list of classes each with a list of students who wish to take that class 
-            (whoPrefers[class], where class is a linked list)
-    Returns: 
-        ret, a 2D Array, where for each ret[i,j], it gives the percentage of students in class i
-        who want to take class j
-'''
-def depart_conflicts(classes):
-    # initialize the returned matrix
-    ret = [[0 for i in range(len(classes))] for j in range(len(classes))]
-
-    for i in range(len(classes)):
-        classA = classes[i]
-        for j in range(len(classes)):
-            classB = classes[j]
-            itt = classB.head
-            while(itt != None):
-                if classA.contains(itt.data):
-                    ret[i][j] += 1
-                itt = itt.next
-            ret[i][j] = ret[i][j] / (classA.size)
-
-    return ret
-
+ 
 def classSchedule(constraints_filename, students_filename):
     #numTimeSlots - integer, number of time slots
     #rooms, unsorted linked list of rooms and associated sizes (size, room#)
@@ -249,7 +223,6 @@ def classSchedule(constraints_filename, students_filename):
     
     # initialize preferred students and Class ranked lists
     classRanks, studentPrefLists, whoPrefers = classQ(students_filename, len(classTeachers))
-    classConflicts = depart_conflicts(whoPrefers)
     globalStudentCount = 0
 
     # innit student's schedules
@@ -274,22 +247,7 @@ def classSchedule(constraints_filename, students_filename):
             clss = classRanks.popFront()
 
             skipTime = False
-            skipRoom = False
-            
-            # checks every other class at our given time. there is a class where 75% of the students want to take that class, 
-            # do not select the current class and move to the next class
-            for r in maxRoomSize[0:room]:
-                if(classConflicts[clss.name][schedule[r][time]] >= 0.75):
-                    holdClass.append(clss)
-                    skipRoom = True
-                
-                if classRanks.isEmpty():
-                    skipTime = True
-                    break
-
-                clss = classRanks.popFront()
-            # if current professor has conflict, or the class conflicts with any class
-            while profSchedules[classTeachers[clss.name]].contains(time) and not skipRoom:
+            while profSchedules[classTeachers[clss.name]].contains(time):
                 #while profSchedules[classFacts[clss.name].professor].contains(time):
                 holdClass.append(clss)
 
@@ -329,7 +287,6 @@ def classSchedule(constraints_filename, students_filename):
     return schedule, globalStudentCount, globalStudentCount / ((len(studentPrefLists) - 1) * 4)
 
 file = open("output.txt", "w")
-print(file)
 file.write("Course\tRoom\tTeacher\tTime\tStudents\n")
 if len(sys.argv) >= 2:
     user_consts_file = sys.argv[1]
@@ -339,6 +296,7 @@ else:
     user_prefs_file = "demo_studentprefs.txt"
     
 schedule, globalStudentCount, score = classSchedule(user_consts_file, user_prefs_file)
+print(score)
 
 for time in schedule:
     for clss in time:
