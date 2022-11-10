@@ -484,14 +484,14 @@ def classSchedule(constraints_filename, students_filename):
 numTimeSlots, maxRoomSize, classes, domains = parseConstraints("scripts/esemtinyc.txt")
 # studentPreferences, whoPrefers = classQ("scripts/esemtinyp.txt", classes)
 
-file = open("mod_output.txt", "w")
-file.write("Course\tRoom\tTeacher\tTime\tStudents\n")
+file = open("mod_output.txt", "wb")
+file.write(bytes("Course\tRoom\tTeacher\tTime\tStudents\n", "UTF-8"))
 schedule, globalStudentCount, score, notAddedDict = classSchedule("scripts/esemtinyc.txt", "scripts/esemtinyp.txt")
 
 for time in schedule:
     for clss in time:
         if not clss is None:
-            file.write(f"{clss}\n")
+            file.write(bytes(f"{clss}\n", "UTF-8"))
 
 print(score)
 print(notAddedDict)
