@@ -12,17 +12,21 @@ import DataStructures as ds
 def depart_conflicts(classes):
     # initialize the returned matrix
     ret = [[0 for i in range(len(classes))] for j in range(len(classes))]
-
+    print(len(classes))
     for i in range(len(classes)):
         classA = classes[i]
         for j in range(len(classes)):
             classB = classes[j]
             itt = classB.head
+            # print(classA.size)
             while(itt != None):
                 if classA.contains(itt.data):
                     ret[i][j] += 1
                 itt = itt.next
-            ret[i][j] = ret[i][j] / (classA.size)
+            if classA.size != 0:
+                ret[i][j] = ret[i][j] / (classA.size)
+            else:
+                ret[i][j] = 0
 
     return ret
 
@@ -51,11 +55,13 @@ c4.append(5)
 c4.append(2)
 c4.append(1)
 
+c5 = ds.LinkedList()
+
 classes.append(c1)
 classes.append(c2)
 classes.append(c3)
 classes.append(c4)
-
+classes.append(c5)
 # print(classes)
 
 print(depart_conflicts(classes))
