@@ -410,13 +410,18 @@ def conflictSchedule(schedule, whoPrefers, studentSchedules, profSchedules, glob
     for r in range(len(schedule)):
         for time in range(len(schedule[r][1:])): #non esems
             currClass = schedule[r][time]
+            orgStu = []
+            maxSwpStu = ([], [])
+            maxSwpLen = -1
+            maxSwpIndex = -1
+
             if currClass is None:
                 continue
+
             room = currClass.room
-            maxSwappedClassStudents = []
-            maxSwapTime = time
-            for t2 in range(len(schedule[r][1:time])):
-                curSwapStudents = []
+
+            for t2 in range(len(schedule[r][1:])):
+                swpStu = []
                 swapClass = schedule[r][t2]
                 if swapClass is None:
                     continue
@@ -425,31 +430,37 @@ def conflictSchedule(schedule, whoPrefers, studentSchedules, profSchedules, glob
                 for student in whoPrefers[swapClass.name]:
                     x = student.id
                     if not studentSchedules[x].contains(time):
-                        curSwapStudents.append(x)
-                if len(curSwapStudents) > room.capacity:
-                    break
-                if len(curSwapStudents) > len(maxSwappedClassStudents):
-                    maxSwappedClassStudents = curSwapStudents
-                    maxSwapTime = t2
-            
-            if len(maxSwappedClassStudents) > len(currClass.enrolled):
-                swapClass = schedule[r][maxSwapTime]
-                globalStudentCount -= len(swapClass.enrolled)
-                globalStudentCount -= len(currClass.enrolled)
-                schedule[r][maxSwapTime] = currClass
-                schedule[r][time] = swapClass
-                schedule[r][maxSwapTime].schedule = maxSwappedClassStudents
+                        swpStu.append(x)
+                    if len(swpStu) > room.capacity:
+                        break
+                if len(currClass.enrolled) < len(swpStu):
+                    for student in whoPrefers[currClass.name]:
+                        x = student.id
+                        if studentSchedules[x].contains(t2):
+                            orgStu.append(x)
+                    swpLen = len(orgStu) + len(swpStu)
+                    orgLen = len(currClass.enrolled) + len(swapClass.enrolled)
+                    if swpLen > orgLen:
+                        if swpLen > maxSwpLen:
+                            maxSwpLen = swpLen
+                            maxSwpStu = (orgLen, swpLen)
+                            maxSwpIndex = t2
+                    
+            if maxSwpIndex != -1:
+                print(f"org enrollment: {len(schedule[r][time].enrolled)} + {len(schedule[r][maxSwpIndex].enrolled)} -> {maxSwpStu[0]} + {maxSwpStu[1]}")
+                globalStudentCount -= len(schedule[r][time].enrolled)
+                globalStudentCount -= len(schedule[r][maxSwpIndex].enrolled)
 
-                for x in maxSwappedClassStudents:
-                    studentSchedules[x].remove(maxSwapTime)
-                    studentSchedules[x].append(time)
-                
-                for x in swapClass.enrolled:
-                    studentSchedules[x].remove(time)
-                    if not studentSchedules[x].contains(maxSwapTime):
-                        studentSchedules[x].append(maxSwapTime)
+                schedule[r][time].enrolled = maxSwpStu[0]
+                schedule[r][maxSwpIndex].enrolled = maxSwpStu[1]
 
-                globalStudentCount += len(schedule[r][maxSwapTime].enrolled) + len(maxSwappedClassStudents)
+                for student in schedule[r][time].enrolled:
+                    studentSchedules[student].remove(time)
+                    studentSchedules[student].append(maxSwpIndex)
+                for student in schedule[r][maxSwpIndex]:
+                    studentSchedules[student].remove(maxSwpIndex)
+                    studentSchedules[student].append(time)
+                schedule[r][time], schedule[r][maxSwpIndex] = schedule[r][maxSwpIndex], schedule[r][time]
 
 
 def classSchedule(constraints_filename, students_filename):
