@@ -337,8 +337,8 @@ file = open("output.txt", "w")
 file.write("Course\tRoom\tTeacher\tTime\tStudents\n")
 # user_consts_file = "scripts/esemtinyc.txt"
 # user_prefs_file = "scripts/esemtinyp.txt"
-user_consts_file = "scripts/testE/constraints_0"
-user_prefs_file =  "scripts/testE/prefs_0"
+user_consts_file = "testE/constraints_0"
+user_prefs_file =  "testE/prefs_0"
 if len(sys.argv) >= 2:
     user_consts_file = sys.argv[1]
     user_prefs_file = sys.argv[2]

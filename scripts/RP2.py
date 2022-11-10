@@ -484,13 +484,13 @@ def classSchedule(constraints_filename, students_filename):
 
     return schedule, globalStudentCount, globalStudentCount / ((len(studentPrefLists) - 1) * 4), notAddedDict
 
-numTimeSlots, maxRoomSize, classes, domains = parseConstraints("scripts/esemtinyc.txt")
+#numTimeSlots, maxRoomSize, classes, domains = parseConstraints("scripts/esemtinyc.txt")
 # studentPreferences, whoPrefers = classQ("scripts/esemtinyp.txt", classes)
 
 file = open("mod_output.txt", "wb")
 file.write(bytes("Course\tRoom\tTeacher\tTime\tStudents\n", "UTF-8"))
 # schedule, globalStudentCount, score, notAddedDict = classSchedule("scripts/esemtinyc.txt", "scripts/esemtinyp.txt")
-schedule, globalStudentCount, score, notAddedDict = classSchedule("scripts/testE/constraints_0", "scripts/testE/prefs_0")
+schedule, globalStudentCount, score, notAddedDict = classSchedule("testE/constraints_0", "testE/prefs_0")
 
 for time in schedule:
     for clss in time:
