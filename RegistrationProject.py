@@ -84,7 +84,7 @@ def parseConstraints(filename):
 # returns
 #   mostPreferred -- LinkedList of classes organized in descending order by how preferred they are
 #   students -- array of arrays. Outer array is indexed by student id, inner arrays are student preference lists
-#   whoPrefers -- array of LinkedLists of students who prefer a class, indexed by class
+#   whoPrefers -- array of arrays of students who prefer a class, indexed by class
 def classQ(studentsFilename, numClasses):
     # array of tuples for merge sort reasons --> will turn into LinkedList() later
     # will be organized (preference level of class, class id)
@@ -92,11 +92,11 @@ def classQ(studentsFilename, numClasses):
 
     #array of LinkedLists of all students who prefer class, indexed by class
     whoPrefers = []
-    whoPrefers.append(ds.LinkedList()) #append blank -- no class 0
+    whoPrefers.append([]) #append blank -- no class 0
 
     for i in range(numClasses):
         mostPreferredClasses.append((0, i))
-        whoPrefers.append(ds.LinkedList())
+        whoPrefers.append([])
 
     file = open(studentsFilename)
 
@@ -213,6 +213,54 @@ def mergeSort(arr, dir):
             arr[k] = R[j]
             j += 1
             k += 1
+
+def conflictSchedule(schedule, whoPrefers, studentSchedules, profSchedules, globalStudentCount):
+    for r in range(len(schedule)):
+        for time in range(len(schedule[r][1:])): #non esems
+            currClass = schedule[r][time]
+            if currClass is None:
+                continue
+            room = currClass.room
+            maxSwappedClassStudents = []
+            maxSwapTime = time
+
+            for t2 in range(len(schedule[r][1:time])):
+                curSwapStudents = []
+                swapClass = schedule[r][t2]
+                if swapClass is None:
+                    continue
+                if profSchedules[swapClass.name].contains(time):
+                    break
+                for student in whoPrefers:
+                    x = student.id
+                    if not studentSchedules[x].contains(time):
+                        curSwapStudents.append(x)
+                if curSwapStudents > room.capacity:
+                    break
+                if curSwapStudents > maxSwappedClassStudents:
+                    maxSwappedClassStudents = curSwapStudents
+                    maxSwapTime = t2
+            
+            if len(maxSwappedClassStudents) > len(currClass.enrolled):
+                swapClass = schedule[r][maxSwapTime]
+                globalStudentCount -= len(swapClass.enrolled)
+                globalStudentCount -= len(currClass.enrolled)
+                schedule[r][maxSwapTime] = currClass
+                schedule[r][time] = swapClass
+                schedule[r][maxSwapTime].schedule = maxSwappedClassStudents
+
+                for x in maxSwappedClassStudents:
+                    studentSchedules[x].remove(maxSwapTime)
+                    studentSchedules[x].append(time)
+                
+                for x in swapClass.enrolled:
+                    studentSchedules[x].remove(time)
+                    if not studentSchedules[x].contains(maxSwapTime):
+                        studentSchedules[x].append(maxSwapTime)
+                    else:
+                        schedule[r][maxSwapTime].enrolled.remove(x)
+
+                globalStudentCount += schedule[r][maxSwapTime].enrolled + len(maxSwappedClassStudents)
  
 def classSchedule(constraints_filename, students_filename):
     #numTimeSlots - integer, number of time slots
@@ -268,11 +316,11 @@ def classSchedule(constraints_filename, students_filename):
             clss.professor = classTeachers[clss.name]
             
             profSchedules[clss.professor].append(time)
-            while not room[0] == len(clss.enrolled) and not whoPrefers[clss.name].isEmpty():
-                x = whoPrefers[clss.name].popFront()
+            for x in whoPrefers[clss.name]:
+                if len(clss.enrolled) == room[0]:
+                    break
                 if(not studentSchedules[x].contains(time)):
                     clss.enrolled.append(x)
-                    
                     studentSchedules[x].append(x) # TODO
                     globalStudentCount+=1
 
@@ -281,6 +329,7 @@ def classSchedule(constraints_filename, students_filename):
             schedule[clss.room - 1].append(clss)
             # print(f"Room: {room[1]} - Class {clss.name}, prof {clss.professor}, time {time}")
 
+    conflictSchedule(schedule, whoPrefers, studentSchedules, profSchedules, globalStudentCount)
     # df = pd.DataFrame(schedule)
     # df.columns = [f'time{t}' for t in range(numTimeSlots)]
     # df.index = [f'room {r[1]}' for r in maxRoomSize]
