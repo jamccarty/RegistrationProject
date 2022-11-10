@@ -159,16 +159,17 @@ def accessibleSchedule(schedule, rooms, numTimes, globalStudentCount, access_cla
     for r in access_rooms:
         domain = r.domain.id
         for c in access_esems[domain]:
-            if c.preferredStudents <= r.capacity and not prof_schedules[c.professor].contains(t):
+            if c.preferredStudents <= r.capacity and not prof_schedules[c.professor].contains(0):
                 if c.name in notAddedDict:
                     notAddedDict.pop(c.name)
                 schedule[r.id][0] = c
                 c.time = 0
                 c.room = r
                 for x in whoPrefers[c.name]:
+                    # print(x)
                     student = x.id
                     c.enrolled.append(student)
-                    student_schedules[student.id].append(0)
+                    student_schedules[student].append(0)
                     taken_time_room_combos.append((0, r.id))
             else:
                 notAddedDict.update({c.name:'no accessible rooms'})
@@ -212,11 +213,16 @@ def classQ(studentsFilename, classes, numClasses):
         for c in range(numClasses): #for each class
             esems[d].append(None)
 
+    tempClasses.append(None) #0 class does not exist
     for domain in classes:
         for clss in domain:
             if not clss is None:
                 whoPrefers.append([])
-                tempClasses.append(clss)
+                tempClasses.append(None)
+    for domain in classes:
+        for clss in domain:
+            if not clss is None:
+                tempClasses[clss.name] = clss
     # for each class in each student preference list, increment that classes preference level
     i = -1
     whoPrefers.append([]) #0 prefer class 0 which doesn't exist --> I don't know what this does and I'm too scared to change it
@@ -224,7 +230,7 @@ def classQ(studentsFilename, classes, numClasses):
         i += 1
         for pref in preferences:
             whoPrefers[pref].append(mech.Student(id, year, major, pref, accomodations))
-            if accomodations == True:
+            if accomodations == True and not tempClasses[pref] is None:
                 d = tempClasses[pref].domain.id
                 # tempClasses[pref].needsAccessibility = True
                 if tempClasses[pref].isEsem == True:
@@ -380,9 +386,9 @@ def miniSchedule(schedule, classes, maxRoomSize, timeSlots, globalStudentCount, 
                     studentSchedules[x].append(x)
                     globalStudentCount+=1
 
-            clss.room = room.id
+            clss.room = room
             clss.time = time
-            schedule[clss.room - 1][time] = clss
+            schedule[clss.room.id - 1][time] = clss
 
     return schedule, globalStudentCount
 
@@ -395,21 +401,20 @@ def conflictSchedule(schedule, whoPrefers, studentSchedules, profSchedules, glob
             room = currClass.room
             maxSwappedClassStudents = []
             maxSwapTime = time
-
             for t2 in range(len(schedule[r][1:time])):
                 curSwapStudents = []
                 swapClass = schedule[r][t2]
                 if swapClass is None:
                     continue
-                if profSchedules[swapClass.name].contains(time):
+                if profSchedules[swapClass.professor].contains(time):
                     break
-                for student in whoPrefers:
+                for student in whoPrefers[swapClass.name]:
                     x = student.id
                     if not studentSchedules[x].contains(time):
                         curSwapStudents.append(x)
-                if curSwapStudents > room.capacity:
+                if len(curSwapStudents) > room.capacity:
                     break
-                if curSwapStudents > maxSwappedClassStudents:
+                if len(curSwapStudents) > len(maxSwappedClassStudents):
                     maxSwappedClassStudents = curSwapStudents
                     maxSwapTime = t2
             
@@ -429,10 +434,8 @@ def conflictSchedule(schedule, whoPrefers, studentSchedules, profSchedules, glob
                     studentSchedules[x].remove(time)
                     if not studentSchedules[x].contains(maxSwapTime):
                         studentSchedules[x].append(maxSwapTime)
-                    else:
-                        schedule[r][maxSwapTime].enrolled.remove(x)
 
-                globalStudentCount += schedule[r][maxSwapTime].enrolled + len(maxSwappedClassStudents)
+                globalStudentCount += len(schedule[r][maxSwapTime].enrolled) + len(maxSwappedClassStudents)
 
 
 def classSchedule(constraints_filename, students_filename):
@@ -486,7 +489,8 @@ numTimeSlots, maxRoomSize, classes, domains = parseConstraints("scripts/esemtiny
 
 file = open("mod_output.txt", "wb")
 file.write(bytes("Course\tRoom\tTeacher\tTime\tStudents\n", "UTF-8"))
-schedule, globalStudentCount, score, notAddedDict = classSchedule("scripts/esemtinyc.txt", "scripts/esemtinyp.txt")
+# schedule, globalStudentCount, score, notAddedDict = classSchedule("scripts/esemtinyc.txt", "scripts/esemtinyp.txt")
+schedule, globalStudentCount, score, notAddedDict = classSchedule("scripts/testE/constraints_0", "scripts/testE/prefs_0")
 
 for time in schedule:
     for clss in time:
