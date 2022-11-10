@@ -356,9 +356,15 @@ def miniSchedule(schedule, classes, maxRoomSize, timeSlots, globalStudentCount, 
             skipTime = False
             if clss.name == 0:
                 continue
-
+            infiniteLoopOption = False
             while profSchedules[clss.professor].contains(time):
+                if classes[room.domain.id].isEmpty():
+                    infiniteLoopOption = True
                 holdClass.append(clss)
+                
+                if infiniteLoopOption == True:
+                    classes[room.domain.id].head = None
+                    classes[room.domain.id].head = None
 
                 notAddedDict.update({clss.name : 'professor schedule conflict'})
 
