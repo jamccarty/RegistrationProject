@@ -157,8 +157,6 @@ def accessibleSchedule(schedule, rooms, numTimes, globalStudentCount, access_cla
 
     taken_time_room_combos = []
 
-    print(len(schedule))
-
     for r in access_rooms:
         domain = r.domain.id
         for c in access_esems[domain]:
@@ -177,7 +175,7 @@ def accessibleSchedule(schedule, rooms, numTimes, globalStudentCount, access_cla
             else:
                 notAddedDict.update({c.name:'not enough accessible rooms'})
     if(len(access_rooms) == 0):
-        for domain in len(access_classes):
+        for domain in range(len(access_classes)):
             for c in access_esems[domain]:
                 notAddedDict.update({c.name: 'not enough accessible rooms'})
             for c in access_classes[domain]:
