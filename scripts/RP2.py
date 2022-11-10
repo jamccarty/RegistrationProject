@@ -178,7 +178,8 @@ def accessibleSchedule(schedule, rooms, numTimes, globalStudentCount, access_cla
         for domain in range(len(access_classes)):
             for c in access_esems[domain]:
                 notAddedDict.update({c.name: 'not enough accessible rooms'})
-            for c in access_classes[domain]:
+            while not access_classes[domain].isEmpty():
+                c = access_classes[domain].popFront()
                 notAddedDict.update({c.name: 'not enough accessible rooms'})
 
     schedule, globalStudentCount = miniSchedule(schedule, access_classes, access_rooms, range(numTimes)[1:], 
