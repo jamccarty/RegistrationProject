@@ -3,6 +3,7 @@ import datetime
 import re
 import DataStructures as ds
 import classroomMechanics as mech
+import sys
 
 '''
 parses contents of constraints.txt
@@ -490,7 +491,14 @@ def classSchedule(constraints_filename, students_filename):
 file = open("mod_output.txt", "wb")
 file.write(bytes("Course\tRoom\tTeacher\tTime\tStudents\n", "UTF-8"))
 # schedule, globalStudentCount, score, notAddedDict = classSchedule("scripts/esemtinyc.txt", "scripts/esemtinyp.txt")
-schedule, globalStudentCount, score, notAddedDict = classSchedule("testE/constraints_0", "testE/prefs_0")
+user_consts_file = "testE/constraints_0"
+user_prefs_file =  "testE/prefs_0"
+if len(sys.argv) >= 2:
+    user_consts_file = sys.argv[1]
+    user_prefs_file = sys.argv[2]
+    
+schedule, globalStudentCount, score, notAddedDict = classSchedule(user_consts_file, user_prefs_file)
+#schedule, globalStudentCount, score, notAddedDict = classSchedule("testE/constraints_0", "testE/prefs_0")
 
 for time in schedule:
     for clss in time:
