@@ -10,7 +10,7 @@ class Class:
         self.enrolled = []
         self.professor = -1
         self.time = -1
-        self.room = -1
+        self.room = (-1, -1)
         self.preferredStudents = 0
     
     def notFull(self):
@@ -20,7 +20,7 @@ class Class:
         students = ""
         for s in self.enrolled:
             students += f"{s} "
-        return f"{self.name}\t{self.room}\t{self.professor}\t{self.time}\t{students}"
+        return f"{self.name}\t{self.room[1]}\t{self.professor}\t{self.time}\t{students}"
 
 # parses contents of constraints.txt
 # params:
@@ -223,21 +223,20 @@ def conflictSchedule(schedule, whoPrefers, studentSchedules, profSchedules, glob
             room = currClass.room
             maxSwappedClassStudents = []
             maxSwapTime = time
-
             for t2 in range(len(schedule[r][1:time])):
                 curSwapStudents = []
                 swapClass = schedule[r][t2]
                 if swapClass is None:
                     continue
-                if profSchedules[swapClass.name].contains(time):
+                if profSchedules[swapClass.professor].contains(time):
                     break
-                for student in whoPrefers:
-                    x = student.id
+                for student in whoPrefers[swapClass.name]:
+                    x = student
                     if not studentSchedules[x].contains(time):
                         curSwapStudents.append(x)
-                if curSwapStudents > room.capacity:
+                if len(curSwapStudents) > room[0]:
                     break
-                if curSwapStudents > maxSwappedClassStudents:
+                if len(curSwapStudents) > len(maxSwappedClassStudents):
                     maxSwappedClassStudents = curSwapStudents
                     maxSwapTime = t2
             
@@ -257,10 +256,9 @@ def conflictSchedule(schedule, whoPrefers, studentSchedules, profSchedules, glob
                     studentSchedules[x].remove(time)
                     if not studentSchedules[x].contains(maxSwapTime):
                         studentSchedules[x].append(maxSwapTime)
-                    else:
-                        schedule[r][maxSwapTime].enrolled.remove(x)
 
-                globalStudentCount += schedule[r][maxSwapTime].enrolled + len(maxSwappedClassStudents)
+                globalStudentCount += len(schedule[r][maxSwapTime].enrolled) + len(maxSwappedClassStudents)
+
  
 def classSchedule(constraints_filename, students_filename):
     #numTimeSlots - integer, number of time slots
@@ -324,9 +322,9 @@ def classSchedule(constraints_filename, students_filename):
                     studentSchedules[x].append(x) # TODO
                     globalStudentCount+=1
 
-            clss.room = room[1]
+            clss.room = room
             clss.time = time
-            schedule[clss.room - 1].append(clss)
+            schedule[clss.room[1] - 1].append(clss)
             # print(f"Room: {room[1]} - Class {clss.name}, prof {clss.professor}, time {time}")
 
     conflictSchedule(schedule, whoPrefers, studentSchedules, profSchedules, globalStudentCount)
@@ -337,12 +335,13 @@ def classSchedule(constraints_filename, students_filename):
 
 file = open("output.txt", "w")
 file.write("Course\tRoom\tTeacher\tTime\tStudents\n")
+# user_consts_file = "scripts/esemtinyc.txt"
+# user_prefs_file = "scripts/esemtinyp.txt"
+user_consts_file = "scripts/testE/constraints_0"
+user_prefs_file =  "scripts/testE/prefs_0"
 if len(sys.argv) >= 2:
     user_consts_file = sys.argv[1]
     user_prefs_file = sys.argv[2]
-else:
-    user_consts_file = "demo_constraints.txt"
-    user_prefs_file = "demo_studentprefs.txt"
     
 schedule, globalStudentCount, score = classSchedule(user_consts_file, user_prefs_file)
 print(score)
