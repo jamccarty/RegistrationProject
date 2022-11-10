@@ -69,6 +69,27 @@ class LinkedList:
         if not n.next == None:
             self.head = n.next
         return n.data
+
+    def remove(self, data):
+        loc = self.head
+        while loc != None:
+            if loc.data == data:
+                if loc == self.head and loc == self.tail:
+                    self.head = None
+                    self.tail = None
+                    return
+                if loc == self.head:
+                    self.head = self.head.next
+                    self.head.prev = None
+                    return
+                if loc == self.tail:
+                    self.tail = self.tail.prev
+                    self.tail.next = None
+                    return
+                loc.prev.next = loc.next
+                loc.next.prev = loc.prev
+                return
+            loc = loc.next
     
     # merge two linked lists so that A->B
     def merge(self, A):
