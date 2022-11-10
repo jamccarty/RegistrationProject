@@ -175,7 +175,13 @@ def accessibleSchedule(schedule, rooms, numTimes, globalStudentCount, access_cla
                     student_schedules[student].append(0)
                     taken_time_room_combos.append((0, r.id))
             else:
-                notAddedDict.update({c.name:'no accessible rooms'})
+                notAddedDict.update({c.name:'not enough accessible rooms'})
+    if(len(access_rooms) == 0):
+        for domain in len(access_classes):
+            for c in access_esems[domain]:
+                notAddedDict.update({c.name: 'not enough accessible rooms'})
+            for c in access_classes[domain]:
+                notAddedDict.update({c.name: 'not enough accessible rooms'})
 
     schedule, globalStudentCount = miniSchedule(schedule, access_classes, access_rooms, range(numTimes)[1:], 
                                                 globalStudentCount, student_schedules, prof_schedules, 
@@ -361,7 +367,7 @@ def miniSchedule(schedule, classes, maxRoomSize, timeSlots, globalStudentCount, 
                 if classes[room.domain.id].isEmpty():
                     infiniteLoopOption = True
                 holdClass.append(clss)
-                
+
                 if infiniteLoopOption == True:
                     classes[room.domain.id].head = None
                     classes[room.domain.id].head = None
@@ -496,18 +502,21 @@ def classSchedule(constraints_filename, students_filename):
 #numTimeSlots, maxRoomSize, classes, domains = parseConstraints("scripts/esemtinyc.txt")
 # studentPreferences, whoPrefers = classQ("scripts/esemtinyp.txt", classes)
 
-file = open("mod_output.txt", "wb")
-file.write(bytes("Course\tRoom\tTeacher\tTime\tStudents\n", "UTF-8"))
-# schedule, globalStudentCount, score, notAddedDict = classSchedule("scripts/esemtinyc.txt", "scripts/esemtinyp.txt")
 user_consts_file = "testE/constraints_0"
 user_prefs_file =  "testE/prefs_0"
 if len(sys.argv) >= 2:
     user_consts_file = sys.argv[1]
     user_prefs_file = sys.argv[2]
-    
+
+start = datetime.datetime.now().microsecond / 1000
 schedule, globalStudentCount, score, notAddedDict = classSchedule(user_consts_file, user_prefs_file)
+end = datetime.datetime.now().microsecond / 1000
+print(f"start: {start} end: {end} time taken: {end - start}")
 #schedule, globalStudentCount, score, notAddedDict = classSchedule("testE/constraints_0", "testE/prefs_0")
 
+file = open("mod_output.txt", "wb")
+file.write(bytes("Course\tRoom\tTeacher\tTime\tStudents\n", "UTF-8"))
+# schedule, globalStudentCount, score, notAddedDict = classSchedule("scripts/esemtinyc.txt", "scripts/esemtinyp.txt")
 for time in schedule:
     for clss in time:
         if not clss is None:
