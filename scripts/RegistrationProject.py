@@ -331,7 +331,7 @@ def classSchedule(constraints_filename, students_filename):
     # df = pd.DataFrame(schedule)
     # df.columns = [f'time{t}' for t in range(numTimeSlots)]
     # df.index = [f'room {r[1]}' for r in maxRoomSize]
-    return schedule, globalStudentCount, globalStudentCount / ((len(studentPrefLists) - 1) * 4)
+    return schedule, globalStudentCount, globalStudentCount / ((len(studentPrefLists) - 1) * 4), (len(studentPrefLists) - 1)*4
 
 file = open("output.txt", "w")
 file.write("Course\tRoom\tTeacher\tTime\tStudents\n")
@@ -343,8 +343,12 @@ if len(sys.argv) >= 2:
     user_consts_file = sys.argv[1]
     user_prefs_file = sys.argv[2]
     
-schedule, globalStudentCount, score = classSchedule(user_consts_file, user_prefs_file)
-print(score)
+start = datetime.datetime.now().microsecond / 1000
+schedule, globalStudentCount, score, totalStudents = classSchedule(user_consts_file, user_prefs_file)
+end = datetime.datetime.now().microsecond / 1000
+print(f"Percent Assigned: {score}")
+print(f"# of Assigned Students: {globalStudentCount}\t Total Possible Assignments: {totalStudents}")
+print(f"Time (milli): {(end-start)}")
 
 for time in schedule:
     for clss in time:
