@@ -157,13 +157,15 @@ def accessibleSchedule(schedule, rooms, numTimes, globalStudentCount, access_cla
 
     taken_time_room_combos = []
 
+    print(len(schedule))
+
     for r in access_rooms:
         domain = r.domain.id
         for c in access_esems[domain]:
             if c.preferredStudents <= r.capacity and not prof_schedules[c.professor].contains(0):
                 if c.name in notAddedDict:
                     notAddedDict.pop(c.name)
-                schedule[r.id][0] = c
+                schedule[r.id - 1][0] = c
                 c.time = 0
                 c.room = r
                 for x in whoPrefers[c.name]:
