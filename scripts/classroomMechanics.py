@@ -134,13 +134,13 @@ class TimeSlot:
         self.end_time = end_time
         self.days_of_week = days_of_week
 
-    def __str__(self, id):
+    def __str__(self):
         return f"{self.id}: {self.start_time} - {self.end_time}"
 
     def conflicts_with(self, other):
         #       --self--
         #   -----other------
-        if self.start_time >= other.start_time and self.end_time <= other.end_time:
+        if other.start_time <= self.start_time <= self.end_time <= other.end_time:
             for self_day in self.days_of_week:
                 if other.days_of_week.count(self_day) > 0:
                     return True
@@ -154,7 +154,21 @@ class TimeSlot:
         
         #       ---self---
         #   ---other---
-        # if self.start_time <= other.end_time <= self.end_time:
+        if self.start_time <= other.end_time <= self.end_time:
+            for self_day in self.days_of_week:
+                if self_day in self.days_of_week:
+                    if other.days_of_week.count(self_day) > 0:
+                        return True
+        
+        #   --------self--------
+        #       ---other---
+        if self.start_time <= other.start_time <= other.end_time <= self.end_time:
+            for self_day in self.days_of_week:
+                if self_day in self.days_of_week:
+                    if other.days_of_week.count(self_day) > 0:
+                        return True
+
+        return False
 
 
 class Time:
