@@ -207,9 +207,6 @@ sub readPrefs {
 		if (/^(\d+)\t(.*)$/) {
 			my $stu = $1;
 			my @prefs = split(/ /, $2);
-			if ($stu == 52){
-				print("$stu + @prefs +\n");
-			}
 			$origStudentPrefs{$stu} = \@prefs;
 		}
 	}
