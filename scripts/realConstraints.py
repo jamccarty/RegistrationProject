@@ -17,17 +17,23 @@ import classroomMechanics as mech
 
 '''
 parses contents of constraints.txt
+
 PARAMS:
   file location of constraints.txt
 
 RETURNS: numTimeSlots, rooms, numClasses
     numTimeSlots -- number of time slots (integer)
-    #TODO: time slots array
     rooms -- array of Room() objects - 
         Each Room() object in rooms holds the following pieces of information:
             capacity - the capacity of the room, integer
             id - the id of the room, string
     numClasses -- number of classes (integer)
+    times -- array of TimeSlot() objects ;
+        Each TimeSlot() object in times holds the following pieces of information:
+            id = the id of the time
+            start_time  - the start time, float
+            end_time - the end time, float
+            days_of_week - the days of the week it occurs on, array of strings
 '''
 def parseConstraints(filename):
     # open file, split by line
@@ -47,12 +53,11 @@ def parseConstraints(filename):
 
     times = []
     count = 0 # timeslot ID
+
     # get all of the timeslots
     for line in lines[1:numTimeSlots + 1]:
         x = line.split('\t')
-        # print(x[1]) # GOTTA MCHECKING. SPLICE THE MWF OFF AHHHH
         x_split = x[1].split(" ")
-        # print(f"Segmented: {x_split}")
         time_spliced = []
         for i in x_split:
             if i != "" and not i.isspace():
@@ -69,8 +74,6 @@ def parseConstraints(filename):
         else:
             for i in days:
                 days_ls.append(i)
-        # print(days_ls)
-
 
         # get the start time
         start_time = [] 
@@ -84,17 +87,9 @@ def parseConstraints(filename):
         end_time.append(time_spliced[3])
         eTime = " ".join(end_time)
 
-        # print(f"Start Time: {sTime}\tEnd Time: {eTime}\t Days:{days}")
-
+        # convert times into a class object
         time_slot = mech.TimeSlot(count, mech.Time(sTime), mech.Time(eTime), days_ls)
         times.append(time_slot)
-        # time_span = " ".join(time_spliced[:len(time_spliced)-1]) # get only the time span
-        # print(f"Rejoined: {time_span}")
-        # print(days)
-        # time_conv = mech.Time(time_span)
-        # print(time_conv)
-
- 
 
     # get number of rooms
     room = lines[1 + numTimeSlots].split('\t')
