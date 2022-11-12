@@ -134,6 +134,9 @@ class TimeSlot:
         self.end_time = end_time
         self.days_of_week = days_of_week
 
+    def __str__(self, id):
+        return f"{self.id}: {self.start_time} - {self.end_time}"
+
     def conflicts_with(self, other):
         #       --self--
         #   -----other------
@@ -153,9 +156,13 @@ class TimeSlot:
         #   ---other---
         # if self.start_time <= other.end_time <= self.end_time:
 
+
 class Time:
     def __init__(self, stringTime):
         time = self.initialize(stringTime)
+
+    def __str__(self):
+        return f"{self.time}"
 
     def initialize(self, stringTime):
         parts = stringTime.split(' ')
