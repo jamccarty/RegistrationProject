@@ -2,6 +2,7 @@ import pandas as pd
 import datetime
 import DataStructures as ds
 import sys
+import classroomMechanics as mech
 
 class Class:
 
@@ -15,6 +16,24 @@ class Class:
     
     def notFull(self):
         return self.len(self.enrolled) - self.roomSize != 0
+
+    def __gt__(self, other):
+        return self.preferredStudents > other.preferredStudents
+    
+    def __lt__(self, other):
+        return self.preferredStudents < other.preferredStudents
+
+    def __ge__(self, other):
+        return self.preferredStudents >= other.preferredStudents
+
+    def __le__(self, other):
+        return self.preferredStudents <= other.preferredStudents
+
+    def __eq__(self, other):
+        return self.preferredStudents == other.preferredStudents
+
+    def __ne__(self, other):
+        return self.preferredStudents != other.preferredStudents
 
     def __str__(self):
         students = ""
@@ -95,7 +114,7 @@ def classQ(studentsFilename, numClasses):
     whoPrefers.append([]) #append blank -- no class 0
 
     for i in range(numClasses):
-        mostPreferredClasses.append((0, i))
+        mostPreferredClasses.append(None)
         whoPrefers.append([])
 
     file = open(studentsFilename)
@@ -128,22 +147,21 @@ def classQ(studentsFilename, numClasses):
     for student in students:
         i += 1
         for pref in student:
-            mostPreferredClasses[pref-1] = (mostPreferredClasses[pref - 1][0] + 1, pref)
+            if mostPreferredClasses[pref-1] is None:
+                mostPreferredClasses[pref-1] = Class(pref)
+                mostPreferredClasses[pref-1].preferredStudents += 1
+            mostPreferredClasses[pref-1].preferredStudents += 1
             whoPrefers[pref].append(i)
 
     # mergeSort the classes based on preference level
 
     # print(mostPreferredClasses)
-    mergeSort(mostPreferredClasses, 1)
+    mergeSort(mostPreferredClasses, 0)
     # print(mostPreferredClasses)
 
     # turn mostPreferredClasses array from an array of tuples to a linked list of Class() objects
     #(will make O(1) removal/re-adding sections when conflicts)
-    mostPreferred = ds.LinkedList()
-    for (pref, id) in mostPreferredClasses:
-        c = Class(id)
-        c.preferredStudents = pref
-        mostPreferred.append(c)
+    mostPreferred = ds.arrayToLinkedList(mostPreferredClasses)
 
     file.close()
     return mostPreferred, students, whoPrefers
@@ -268,7 +286,7 @@ def classSchedule(constraints_filename, students_filename):
     mergeSort(maxRoomSize, 0)
     
     # initialize preferred students and Class ranked lists
-    classRanks, studentPrefLists, whoPrefers = classQ(students_filename, len(classTeachers))
+    classRanks, studentPrefLists, whoPrefers = classQ(students_filename, len(classTeachers)-1)
     globalStudentCount = 0
 
     # innit student's schedules
@@ -288,7 +306,7 @@ def classSchedule(constraints_filename, students_filename):
                 # df.columns = [f'time {t}' for t in range(numTimeSlots)]
                 # df.index = [f'room {r[1]}' for r in maxRoomSize]
                 # print(studentPreferenceCount)
-                return schedule, globalStudentCount, globalStudentCount / (len(studentPrefLists) * 4)
+                return schedule, globalStudentCount, globalStudentCount / ((len(studentPrefLists) - 1) * 4), (len(studentPrefLists) - 1)*4
 
             clss = classRanks.popFront()
 
@@ -296,6 +314,7 @@ def classSchedule(constraints_filename, students_filename):
             while profSchedules[classTeachers[clss.name]].contains(time):
                 #while profSchedules[classFacts[clss.name].professor].contains(time):
                 holdClass.append(clss)
+                #print(classRanks)
 
                 if classRanks.isEmpty():
                     skipTime = True
@@ -319,7 +338,7 @@ def classSchedule(constraints_filename, students_filename):
                     break
                 if(not studentSchedules[x].contains(time)):
                     clss.enrolled.append(x)
-                    studentSchedules[x].append(x) # TODO
+                    studentSchedules[x].append(time) # TODO
                     globalStudentCount+=1
 
             clss.room = room
