@@ -333,8 +333,8 @@ def classSchedule(constraints_filename, students_filename):
     # df.index = [f'room {r[1]}' for r in maxRoomSize]
     return schedule, globalStudentCount, globalStudentCount / ((len(studentPrefLists) - 1) * 4), (len(studentPrefLists) - 1)*4
 
-file = open("output.txt", "w")
-file.write("Course\tRoom\tTeacher\tTime\tStudents\n")
+file = open("output.txt", "wb")
+file.write(bytes("Course\tRoom\tTeacher\tTime\tStudents\n", "UTF-8"))
 # user_consts_file = "scripts/esemtinyc.txt"
 # user_prefs_file = "scripts/esemtinyp.txt"
 user_consts_file = "baseE/constraints_0"
@@ -352,6 +352,6 @@ print(f"Time (milli): {(end-start)}")
 
 for time in schedule:
     for clss in time:
-        file.write(f"{clss}\n")
+        file.write(bytes(f"{clss}\n", "UTF-8"))
 
 file.close()
