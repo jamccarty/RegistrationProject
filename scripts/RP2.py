@@ -409,7 +409,7 @@ def miniSchedule(schedule, classes, maxRoomSize, timeSlots, globalStudentCount, 
     return schedule, globalStudentCount
 
 def conflictSchedule(room_schedule, whoPrefers, studentSchedules, profSchedules, globalStudentCount):
-    for time in range(len(schedule[r][1:])): #non esems
+    for time in range(len(room_schedule[1:])): #non esems
         currClass = room_schedule[time]
         orgStu = []
         maxSwpStu = ([], [])
@@ -456,24 +456,25 @@ def conflictSchedule(room_schedule, whoPrefers, studentSchedules, profSchedules,
                 if swpLen > orgLen: #TODO we should also probably have some sort of maxOrgLen and maxOrgStu array as well, since we've already calculated them
                     if swpLen > maxSwpLen:
                         maxSwpLen = swpLen
-                        maxSwpStu = (orgLen, swpLen)
+                        maxSwpStu = (orgStu, swpStu)
                         maxSwpIndex = t2
                 
         if maxSwpIndex != -1:
-            print(f"org enrollment: {len(room_schedule[time].enrolled)} + {len(room_schedule[maxSwpIndex].enrolled)} -> {maxSwpStu[0]} + {maxSwpStu[1]}")
+            print(f"org enrollment: {len(room_schedule[time].enrolled)} + {len(room_schedule[maxSwpIndex].enrolled)} -> {len(maxSwpStu[0])} + {len(maxSwpStu[1])}")
             globalStudentCount -= len(room_schedule[time].enrolled)
             globalStudentCount -= len(room_schedule[maxSwpIndex].enrolled)
 
             room_schedule[time].enrolled = maxSwpStu[0]
             room_schedule[maxSwpIndex].enrolled = maxSwpStu[1]
 
-            for student in schedule[r][time].enrolled:
+
+            for student in room_schedule[time].enrolled:
                 studentSchedules[student].remove(time)
                 studentSchedules[student].append(maxSwpIndex)
-            for student in schedule[r][maxSwpIndex]:
+            for student in room_schedule[maxSwpIndex].enrolled:
                 studentSchedules[student].remove(maxSwpIndex)
                 studentSchedules[student].append(time)
-            room_schedule[time], schedule[r][maxSwpIndex] = schedule[r][maxSwpIndex], schedule[r][time]
+            room_schedule[time], room_schedule[maxSwpIndex] = room_schedule[maxSwpIndex], room_schedule[time]
             globalStudentCount += len(room_schedule[time].enrolled) + len(room_schedule[maxSwpIndex].enrolled)
 
 
