@@ -134,13 +134,13 @@ class TimeSlot:
         self.end_time = end_time
         self.days_of_week = days_of_week
 
-    def __str__(self, id):
+    def __str__(self):
         return f"{self.id}: {self.start_time} - {self.end_time}"
 
     def conflicts_with(self, other):
         #       --self--
         #   -----other------
-        if self.start_time >= other.start_time and self.end_time <= other.end_time:
+        if other.start_time <= self.start_time <= self.end_time <= other.end_time:
             for self_day in self.days_of_week:
                 if other.days_of_week.count(self_day) > 0:
                     return True
@@ -154,7 +154,21 @@ class TimeSlot:
         
         #       ---self---
         #   ---other---
-        # if self.start_time <= other.end_time <= self.end_time:
+        if self.start_time <= other.end_time <= self.end_time:
+            for self_day in self.days_of_week:
+                if self_day in self.days_of_week:
+                    if other.days_of_week.count(self_day) > 0:
+                        return True
+        
+        #   --------self--------
+        #       ---other---
+        if self.start_time <= other.start_time <= other.end_time <= self.end_time:
+            for self_day in self.days_of_week:
+                if self_day in self.days_of_week:
+                    if other.days_of_week.count(self_day) > 0:
+                        return True
+
+        return False
 
 
 class Time:
@@ -176,6 +190,24 @@ class Time:
         min = int(hourMin[1])
         return float(hour) + float(min)/60
 
+    def __le__(self, other):
+        return self.time <= other.time
+    
+    def __ge__(self, other):
+        return self.time >= other.time
+
+    def __lt__(self, other):
+        return self.time < other.time
+
+    def __gt__(self, other):
+        return self.time > other.time
+
+    def __eq__(self, other):
+        return self.time == other.time
+
+    def __ne__(self, other):
+        return self.time != other.time
+
 
 class Room:
     def __init__(self, id, capacity, domain, accessible):
@@ -184,7 +216,10 @@ class Room:
         self.domain = domain
         self.accessible = accessible
 
-    
+    def __init__(self, name, id, capacity):
+        self.id = id
+        self.capacity = capacity
+        self.name = name
 
     def __gt__(self, other):
         return self.capacity > other.capacity
