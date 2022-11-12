@@ -190,6 +190,24 @@ class Time:
         min = int(hourMin[1])
         return float(hour) + float(min)/60
 
+    def __le__(self, other):
+        return self.time <= other.time
+    
+    def __ge__(self, other):
+        return self.time >= other.time
+
+    def __lt__(self, other):
+        return self.time < other.time
+
+    def __gt__(self, other):
+        return self.time > other.time
+
+    def __eq__(self, other):
+        return self.time == other.time
+
+    def __ne__(self, other):
+        return self.time != other.time
+
 
 class Room:
     def __init__(self, id, capacity, domain, accessible):
@@ -197,11 +215,6 @@ class Room:
         self.capacity = capacity
         self.domain = domain
         self.accessible = accessible
-
-    def __init__(self, name, id, capacity):
-        self.id = id
-        self.capacity = capacity
-        self.name = name
 
     def __gt__(self, other):
         return self.capacity > other.capacity
