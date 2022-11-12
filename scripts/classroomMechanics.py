@@ -159,7 +159,7 @@ class TimeSlot:
 
 class Time:
     def __init__(self, stringTime):
-        time = self.initialize(stringTime)
+        self.time = self.initialize(stringTime)
 
     def __str__(self):
         return f"{self.time}"
