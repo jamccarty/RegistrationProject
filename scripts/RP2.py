@@ -460,7 +460,7 @@ def conflictSchedule(room_schedule, whoPrefers, studentSchedules, profSchedules,
                         maxSwpIndex = t2
                 
         if maxSwpIndex != -1:
-            print(f"org enrollment: {len(room_schedule[time].enrolled)} + {len(room_schedule[maxSwpIndex].enrolled)} -> {len(maxSwpStu[0])} + {len(maxSwpStu[1])}")
+            #print(f"org enrollment: {len(room_schedule[time].enrolled)} + {len(room_schedule[maxSwpIndex].enrolled)} -> {len(maxSwpStu[0])} + {len(maxSwpStu[1])}")
             globalStudentCount -= len(room_schedule[time].enrolled)
             globalStudentCount -= len(room_schedule[maxSwpIndex].enrolled)
 

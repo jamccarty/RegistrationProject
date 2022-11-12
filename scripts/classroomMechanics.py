@@ -216,6 +216,11 @@ class Room:
         self.domain = domain
         self.accessible = accessible
 
+    def __init__(self, name, id, capacity):
+        self.id = id
+        self.capacity = capacity
+        self.name = name
+
     def __gt__(self, other):
         return self.capacity > other.capacity
 
