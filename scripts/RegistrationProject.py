@@ -296,6 +296,8 @@ def classSchedule(constraints_filename, students_filename):
             while profSchedules[classTeachers[clss.name]].contains(time):
                 #while profSchedules[classFacts[clss.name].professor].contains(time):
                 holdClass.append(clss)
+                print(holdClass)
+                #print(classRanks)
 
                 if classRanks.isEmpty():
                     skipTime = True
@@ -319,7 +321,7 @@ def classSchedule(constraints_filename, students_filename):
                     break
                 if(not studentSchedules[x].contains(time)):
                     clss.enrolled.append(x)
-                    studentSchedules[x].append(x) # TODO
+                    studentSchedules[x].append(time) # TODO
                     globalStudentCount+=1
 
             clss.room = room
