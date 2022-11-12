@@ -129,7 +129,6 @@ while (<SCHED>) {
 						my @temp = ($course);
 						$studentCourses{$stu} = \@temp; 
 					}
-
 					if (!inArray($course, \@{$origStudentPrefs{$stu}})) {
 						print "Student $stu assigned to unrequested course $course.\n";
 						print "Line:$_\n";
@@ -208,6 +207,9 @@ sub readPrefs {
 		if (/^(\d+)\t(.*)$/) {
 			my $stu = $1;
 			my @prefs = split(/ /, $2);
+			if ($stu == 52){
+				print("$stu + @prefs +\n");
+			}
 			$origStudentPrefs{$stu} = \@prefs;
 		}
 	}
