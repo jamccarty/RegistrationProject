@@ -296,7 +296,7 @@ def classSchedule(constraints_filename, students_filename):
             while profSchedules[classTeachers[clss.name]].contains(time):
                 #while profSchedules[classFacts[clss.name].professor].contains(time):
                 holdClass.append(clss)
-                print(holdClass)
+                #print(holdClass)
                 #print(classRanks)
 
                 if classRanks.isEmpty():
