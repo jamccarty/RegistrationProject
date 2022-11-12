@@ -129,6 +129,7 @@ while (<SCHED>) {
 						my @temp = ($course);
 						$studentCourses{$stu} = \@temp; 
 					}
+
 					if (!inArray($course, \@{$origStudentPrefs{$stu}})) {
 						print "Student $stu assigned to unrequested course $course.\n";
 						print "Line:$_\n";
