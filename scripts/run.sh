@@ -4,5 +4,5 @@ do
     p_file="testE/prefs_$i"
     echo "File" $i
     python RegistrationProject.py $c_file $p_file #will need to modify RegistrationProject.py to take runtime args
-    perl is_valid.pl $c_file $p_file output.txt
+    perl is_valid2.pl $c_file $p_file output.txt
 done
