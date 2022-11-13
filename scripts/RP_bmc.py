@@ -55,9 +55,17 @@ class Class:
             Each Room() object in rooms holds the following pieces of information:
                 capacity - the capacity of the room, integer
                 id - the id of the room, string
+        classes -- array of Class() objects:
+            Each Class() object in classes holds the following pieces ofi nformation:
+                name -
+                professor - the professor elligable to teach that class
+                major - the major the class counts towards
+                domain - the comain that class falls under
+                isEsem - if the class is an Esem
+                id - a numerical ID for that class
         times -- array of TimeSlot() objects:
             Each TimeSlot() object in times holds the following pieces of information:
-                id = the id of the time
+                id - the id of the time
                 start_time  - the start time, float
                 end_time - the end time, float
                 days_of_week - the days of the week it occurs on, array of strings
@@ -128,17 +136,14 @@ def parseConstraints(filename):
     # (this is so that after merge sorting, each size remains paired with correct room id)
     for line in lines[2+numTimeSlots:2 + numTimeSlots + numRooms]:
         x = line.split('\t')
-        # TODO: handle domains and accessibility
-        new_room = mech.Room(x[0], int(x[1]), "domain", True) # ID capacity domain accesible
+        new_room = mech.Room(x[0], count, int(x[1]), True)
         rooms.append(new_room)
-        classes.append([])
         count += 1
     
-    mergeSort(rooms, 0)
-
     # Get Number of Classes
     loc = 2 + numTimeSlots + numRooms 
     x = lines[loc].split('\t')
+    # print(x)
     numClasses = int(x[1])
 
     # Get Number of Class Teachers
@@ -147,15 +152,15 @@ def parseConstraints(filename):
     classTeachers = [] # array of classes indexed by classID (first is 0)
     classTeachers.append(0) #there is no 0 class
 
-    # assign correct professor for each class
+    # adding correct professor for each class
+    print(f"numClasses:{numClasses}")
     for i in range(numClasses):
         loc += 1
         tc = lines[loc].split('\t')
-        # TODO: accessibility and domains - I guess also make a major bank? that isn't hard to do right
-        new_class = mech.Class(int(tc[0]), int(tc[1]), tc[2], "TODO", False,i+1)
-        # print(new_class)
+        requiredProfessor = int(tc[1])
+        majorContributedTo = tc[2]
+        new_class = mech.Class(int(tc[0]), requiredProfessor, majorContributedTo, "TODO", False,i+1)
         classes.append(new_class)
-
     file.close() #close file
     return numTimeSlots, rooms, classes, times
 
@@ -448,16 +453,16 @@ def classSchedule(constraints_filename, students_filename):
         classTeachers -- array of classes indexed by professor who teaches them
         times -- list of timeslots
     '''
-    numTimeSlots, maxRoomSize, classTeachers, times = parseConstraints(constraints_filename)
-    mergeSort(maxRoomSize, 0)
-    
+    numTimeSlots, maxRoomSize, classes, times = parseConstraints(constraints_filename)
+    # mergeSort(maxRoomSize, 0)
+
     # initialize preferred students and Class ranked lists
-    classRanks, studentPrefLists, whoPrefers = classQ(students_filename, classTeachers, len(classTeachers)-1) # TODO: numClasses here??
+    classRanks, studentPrefLists, whoPrefers = classQ(students_filename, classes, len(classes)-1) # TODO: numClasses here??
     globalStudentCount = 0
 
     # innit student's schedules
     studentSchedules = generateSchedules(len(studentPrefLists))
-    profSchedules = generateSchedules(int(len(classTeachers) / 2))
+    profSchedules = generateSchedules(int(len(classes) / 2))
 
     holdClass = ds.LinkedList()
     schedule = []

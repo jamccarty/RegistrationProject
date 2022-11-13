@@ -49,7 +49,7 @@ def parseConstraints(filename):
     # variable names are always separated from values by \t
     x = lines[loc].split('\t')
     numTimeSlots = int(x[1]) # these are the time slots
-    print(numTimeSlots)
+    # print(numTimeSlots)
 
     times = []
     count = 0 # timeslot ID
@@ -112,7 +112,7 @@ def parseConstraints(filename):
     # Get Number of Classes
     loc = 2 + numTimeSlots + numRooms 
     x = lines[loc].split('\t')
-    print(x)
+    # print(x)
     numClasses = int(x[1])
 
     # Get Number of Class Teachers
@@ -123,6 +123,7 @@ def parseConstraints(filename):
     # print(loc) # should start at 123
     # adding correct professor for each class
     # print(numClasses)
+    print(f"numClasses:{numClasses}")
     for i in range(numClasses):
         loc += 1
         # print(i)
@@ -134,7 +135,8 @@ def parseConstraints(filename):
         new_class = mech.Class(int(tc[0]), requiredProfessor, majorContributedTo, "TODO", False,i+1)
         # print(new_class)
         classes.append(new_class)
-
+    print(loc)
+    print(len(classes))
     file.close() #close file
     return numTimeSlots, rooms, classes, times
 
@@ -149,7 +151,7 @@ print(f"Number of Time Slots: {numTimeSlots}")
 # print(classes) # ? RN it's just printing the uh. the teacher
 for clss in classes:
     print(f"{clss.name}\t{clss.professor}\t{clss.major}")
-# print(len(classes))
+print(len(classes))
 # print(timeSlots)
 # for time in timeSlots:
 #     print(f"{time.start_time}\t{time.end_time}\t{time.days_of_week}")
