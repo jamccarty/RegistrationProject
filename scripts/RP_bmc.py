@@ -4,6 +4,7 @@ import re
 import DataStructures as ds
 import classroomMechanics as mech
 import sys
+import random
 
 class Class:
 
@@ -54,10 +55,17 @@ class Class:
             Each Room() object in rooms holds the following pieces of information:
                 capacity - the capacity of the room, integer
                 id - the id of the room, string
-        numClasses -- number of classes (integer)
-        times -- array of TimeSlot() objects ;
+        classes -- array of Class() objects:
+            Each Class() object in classes holds the following pieces ofi nformation:
+                name -
+                professor - the professor elligable to teach that class
+                major - the major the class counts towards
+                domain - the comain that class falls under
+                isEsem - if the class is an Esem
+                id - a numerical ID for that class
+        times -- array of TimeSlot() objects:
             Each TimeSlot() object in times holds the following pieces of information:
-                id = the id of the time
+                id - the id of the time
                 start_time  - the start time, float
                 end_time - the end time, float
                 days_of_week - the days of the week it occurs on, array of strings
@@ -121,62 +129,53 @@ def parseConstraints(filename):
     room = lines[1 + numTimeSlots].split('\t')
     numRooms = int(room[1]) #number of rooms total
     rooms = []
+    classes = []
     count = 1 # this is the "ID"
 
     # initialize rooms array -- array of tuples (room size, room id)
     # (this is so that after merge sorting, each size remains paired with correct room id)
     for line in lines[2+numTimeSlots:2 + numTimeSlots + numRooms]:
         x = line.split('\t')
-        # TODO: handle domains and accessibility
-        new_room = mech.Room(x[0], int(x[1]), "domain", True) # ID capacity domain accesible
+        new_room = mech.Room(x[0], count, int(x[1]), True)
         rooms.append(new_room)
         count += 1
-    mergeSort(rooms, 0)
-
+    
     # Get Number of Classes
-    loc = 2 + numTimeSlots + numRooms + 1
+    loc = 2 + numTimeSlots + numRooms 
     x = lines[loc].split('\t')
+    # print(x)
     numClasses = int(x[1])
 
     # Get Number of Class Teachers
+    loc += 1
     x = lines[loc].split('\t')
     classTeachers = [] # array of classes indexed by classID (first is 0)
     classTeachers.append(0) #there is no 0 class
 
     # adding correct professor for each class
+    print(f"numClasses:{numClasses}")
     for i in range(numClasses):
         loc += 1
         tc = lines[loc].split('\t')
-        classTeachers.append(int(tc[1]))
-
+        requiredProfessor = int(tc[1])
+        majorContributedTo = tc[2]
+        new_class = mech.Class(int(tc[0]), requiredProfessor, majorContributedTo, "TODO", False,i+1)
+        classes.append(new_class)
     file.close() #close file
-    return numTimeSlots, rooms, numClasses, times
+    return numTimeSlots, rooms, classes, times
 
 '''
+    Generates an array of students
     PARAMS:
-        studentsFilename -- FILE OBJECT of studentprefs.txt
-        numClasses -- number of classes
-    RETURNS:
-        mostPreferred -- LinkedList of classes organized in descending order by how preferred they are
-        students -- array of arrays. Outer array is indexed by student id, inner arrays are student preference lists
-        whoPrefers -- array of arrays of students who prefer a class, indexed by class
-'''
-def classQ(studentsFilename, numClasses):
-    # array of tuples for merge sort reasons --> will turn into LinkedList() later
-    # will be organized (preference level of class, class id)
-    mostPreferredClasses = []
-
-    #array of LinkedLists of all students who prefer class, indexed by class
-    whoPrefers = []
-    whoPrefers.append([]) #append blank -- no class 0
-
-    for i in range(numClasses):
-        mostPreferredClasses.append(None)
-        whoPrefers.append([])
-
+        studentsFilename -- string filename of studentPreferenceList file
+    RETURNS: 
+        students -- an array of student tuplets where each student[i] = (year, major, [class preferences])
+'''   
+def studentsArray(studentsFilename):
     file = open(studentsFilename)
 
     string = file.read()
+    string = re.sub('[\n]+', '\n', string)
     lines = string.split('\n')
     lines = lines[1:] #skip first line
 
@@ -189,36 +188,128 @@ def classQ(studentsFilename, numClasses):
         if line == "":
             break
         
-        line = line.split('\t')[1] #isolate student preferences
-        pref = line.split(' ') #parse preferences
+        # TODO: maybe change the random year/major and all no accomodations later
+        # at the very least change random major to match that of the given major classes but
+        # I (Audrey) don't know how to do that so for the time being WE ARE NOT
+        line = re.sub('[\t]+', '\t', line)
+        parts = line.split('\t') #parts now holds ['id', 'pref1 pref2 pref3 pref4 year major accomodations]
+        line_pref = parts[1] #isolate student preferences
+        year = random.randrange(1,5) #int(parts[2]) -- since there are no assigned major atm we're randomly generating them
+        major = random.randrange(0,11) # int(parts[3]) # ????? HHHHHH??? WHY IS THIS BLUE 
+        accomodations = True # if int(parts[4]) == 1 else False -- again, randomly assigned later. 
+        pref = line_pref.split(' ') #parse preferences
+
 
         if len(pref) == 0:
             break
-        students.append([])
-        students[i] = [int(p) for p in pref] #convert preferences to integers
+        preferences_integers = [int(p) for p in pref if p != ""] #convert preferences to integers
+        students.append((i, year, major, preferences_integers, accomodations))
 
+    file.close()
+    return students
+
+'''
+    PARAMS:
+        studentsFilename -- FILE OBJECT of studentprefs.txt
+        numClasses -- number of classes
+    RETURNS:
+        mostPreferred -- LinkedList of classes organized in descending order by how preferred they are
+        students -- array of arrays. Outer array is indexed by student id, inner arrays are student preference lists
+        whoPrefers -- array of arrays of students who prefer a class, indexed by class
+'''
+def classQ(studentsFilename, classes, numClasses):
+    studentPreferences = studentsArray(studentsFilename)
+
+    #array of LinkedLists of all students who prefer class, indexed by class
+    whoPrefers = []
+    whoPrefers.append([]) #append blank -- no class 0
+    tempClasses = [] #temporary array of all classes -- will be discarded with stack frame
+
+    esems = []
+
+    access_esems = [] #esems that need to be accessible, indexed by domain
+    access_classes = [] #classes that need to be accessible, indexed by domain
+
+    for d in range(len(classes)): #for number of domains
+        esems.append([])
+        esems[d].append(None) #0 class does not exist
+
+        access_esems.append([]) #don't need to be indexed
+        access_classes.append([]) #don't need to be indexed
+
+        for c in range(numClasses): #for each class
+            esems[d].append(None)
+
+    tempClasses.append(None) #0 class does not exist
+    # TODO: what the fuck is "classes" supposed to even look like??
+    for domain in classes:
+        for clss in domain:
+            if not clss is None:
+                whoPrefers.append([])
+                tempClasses.append(None)
+    for domain in classes:
+        for clss in domain:
+            if not clss is None:
+                tempClasses[clss.name] = clss
 
     # for each class in each student preference list, increment that classes preference level
     i = -1
-    whoPrefers.append(0) #0 prefer class 0 which doesn't exist --> I don't know what this does but I'm too scared to change it
-    for student in students:
+    whoPrefers.append([]) #0 prefer class 0 which doesn't exist --> I don't know what this does and I'm too scared to change it
+    for (id, year, major, preferences, accomodations) in studentPreferences[1:]:
         i += 1
-        for pref in student:
-            if mostPreferredClasses[pref-1] is None:
-                mostPreferredClasses[pref-1] = Class(pref)
-                mostPreferredClasses[pref-1].preferredStudents += 1
-            mostPreferredClasses[pref-1].preferredStudents += 1
-            whoPrefers[pref].append(i)
+        for pref in preferences:
+            whoPrefers[pref].append(mech.Student(id, year, major, pref, accomodations))
+            if accomodations == True and not tempClasses[pref] is None:
+                d = tempClasses[pref].domain.id
+                # tempClasses[pref].needsAccessibility = True
+                if tempClasses[pref].isEsem == True:
+                    access_esems[d].append(tempClasses[pref])
+                    esems[d][pref] = None
+                    classes[d][pref] = None
+                else:
+                    access_classes[d].append(tempClasses[pref])
+                    classes[d][pref] = None
+                    esems[d][pref] = None
+                tempClasses[pref] = None #no longer in tempClasses list -- in classes that need accessibility
+    count = 0
+    for clss in tempClasses:
+        count += 1
+        if not clss is None:
+            if clss.isEsem == True:
+                esems[clss.domain.id][clss.name] = clss
+                esems[clss.domain.id][clss.name].preferredStudents = len(whoPrefers[clss.name])
+                # esems[clss.domain.id][clss.name].needsAccessibility = clss.needsAccessibility
 
-    # mergeSort the classes based on preference level
-    mergeSort(mostPreferredClasses, 0)
+                classes[clss.domain.id][clss.name] = None
 
-    # turn mostPreferredClasses array from an array of tuples to a linked list of Class() objects
-    #(will make O(1) removal/re-adding sections when conflicts)
-    mostPreferred = ds.arrayToLinkedList(mostPreferredClasses)
 
-    file.close()
-    return mostPreferred, students, whoPrefers
+            else:
+                classes[clss.domain.id][clss.name].preferredStudents = len(whoPrefers[clss.name])
+                # classes[clss.domain.id][clss.name].needsAccessibility = clss.needsAccessibility
+
+    #sort each whoPrefers[class] linked list in this order: majorSenior > majorJunior > nonMajorSenior > nonMajorJunior > Soph > Fresh
+    for i in range(len(whoPrefers))[1:]:
+        mergeSort(whoPrefers[i], 0)   
+
+    for i in range(len(classes)):
+        classes[i] = ds.removeBlanks(classes[i])
+        mergeSort(classes[i], 0)
+        # print(f"classes[{i}]: ",end="")
+        # mech.printClassArray(classes[i])
+        classes[i] = ds.arrayToLinkedList(classes[i])
+
+        esems[i] = ds.removeBlanks(esems[i])
+        mergeSort(esems[i], 0)
+        # print(f"esems[{i}]: ",end="")
+        # mech.printClassArray(esems[i])
+        esems[i] = ds.arrayToLinkedList(esems[i])
+
+        mergeSort(access_esems[i], 1)
+        mergeSort(access_classes[i], 1)
+        # print(f"access_classes[{i}]: ",end="")
+        # mech.printClassArray(access_classes[i])
+
+    return studentPreferences, whoPrefers, esems, access_classes, access_esems
 
 '''
     Generates an array of LinkedList, where each LinkedList can hold time slots [person_index] has a class
@@ -362,16 +453,16 @@ def classSchedule(constraints_filename, students_filename):
         classTeachers -- array of classes indexed by professor who teaches them
         times -- list of timeslots
     '''
-    numTimeSlots, maxRoomSize, classTeachers, times = parseConstraints(constraints_filename)
-    mergeSort(maxRoomSize, 0)
-    
+    numTimeSlots, maxRoomSize, classes, times = parseConstraints(constraints_filename)
+    # mergeSort(maxRoomSize, 0)
+
     # initialize preferred students and Class ranked lists
-    classRanks, studentPrefLists, whoPrefers = classQ(students_filename, len(classTeachers)-1)
+    classRanks, studentPrefLists, whoPrefers = classQ(students_filename, classes, len(classes)-1) # TODO: numClasses here??
     globalStudentCount = 0
 
     # innit student's schedules
     studentSchedules = generateSchedules(len(studentPrefLists))
-    profSchedules = generateSchedules(int(len(classTeachers) / 2))
+    profSchedules = generateSchedules(int(len(classes) / 2))
 
     holdClass = ds.LinkedList()
     schedule = []
@@ -435,8 +526,6 @@ def classSchedule(constraints_filename, students_filename):
 def main():
     file = open("output.txt", "wb")
     file.write(bytes("Course\tRoom\tTeacher\tTime\tStudents\n", "UTF-8"))
-    # user_consts_file = "scripts/esemtinyc.txt"
-    # user_prefs_file = "scripts/esemtinyp.txt"
     user_consts_file = ""
     user_prefs_file =  ""
     if len(sys.argv) >= 2:
@@ -457,4 +546,4 @@ def main():
             file.write(bytes(f"{clss}\n", "UTF-8"))
 
     file.close()
-# main()
+main()
