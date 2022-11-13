@@ -428,7 +428,7 @@ def miniSchedule(schedule, classes, maxRoomSize, timeSlots, studentSchedules, pr
             taken_time_room_combos.append((time, room.id))
             # print(clss.name)
         for r in maxRoomSize[:room.id]:
-           conflictSchedule(schedule[r.id - 1], whoPrefers, studentSchedules, profSchedules, globalStudentCount)
+           conflictSchedule(schedule[r.id - 1], whoPrefers, studentSchedules, profSchedules)
     return schedule
 
 def conflictSchedule(room_schedule, whoPrefers, studentSchedules, profSchedules):
