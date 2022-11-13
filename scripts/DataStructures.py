@@ -1,3 +1,5 @@
+import classroomMechanics as mech
+
 class LinkedList:
     class Node:
         def __init__(self, data):
@@ -42,9 +44,12 @@ class LinkedList:
             self.head.prev = n
             self.head = n
     
-    def append(self, data):
+    def append(self, data, printData = False):
         n = self.Node(data)
         self.size += 1
+
+        if printData:
+            print(f"appending {data} to {self}")
 
         if self.tail == None:
             self.head = n
@@ -186,13 +191,3 @@ def mergeSort(arr, dir):
             arr[k] = R[j]
             j += 1
             k += 1
-
-def printLL(LL):
-    loc = LL.head
-    if LL.head == None:
-        print(" ")
-        return
-    print(f"[")
-    while loc != None:
-        print(f"{loc.data.name}, ", end='')
-        loc = loc.next
