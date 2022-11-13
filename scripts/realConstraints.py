@@ -12,7 +12,7 @@ import classroomMechanics as mech
 
     Classes     # of Classes
     Teachers    # of Teachers
-        Class ID    Teacher ID      Valid Rooms [WHICH WE ARE IGNORING]   
+        Class ID    Teacher ID    Major     Valid Rooms [WHICH WE ARE IGNORING]   
 '''
 
 '''
@@ -95,44 +95,61 @@ def parseConstraints(filename):
     room = lines[1 + numTimeSlots].split('\t')
     numRooms = int(room[1]) #number of rooms total
     rooms = []
+    classes = []
     count = 1 # this is the "ID"
 
     # initialize rooms array -- array of tuples (room size, room id)
     # (this is so that after merge sorting, each size remains paired with correct room id)
     for line in lines[2+numTimeSlots:2 + numTimeSlots + numRooms]:
         x = line.split('\t')
-        new_room = mech.Room(x[0], count, int(x[1]))
+        # id = x[0]
+        # capacity = int(x[1])
+        # domain = mech.domain(x[2], dom_id)
+        new_room = mech.Room(x[0], count, int(x[1]), True)
         rooms.append(new_room)
         count += 1
     
     # Get Number of Classes
-    loc = 2 + numTimeSlots + numRooms + 1
+    loc = 2 + numTimeSlots + numRooms 
     x = lines[loc].split('\t')
+    print(x)
     numClasses = int(x[1])
 
     # Get Number of Class Teachers
+    loc += 1
     x = lines[loc].split('\t')
     classTeachers = [] # array of classes indexed by classID (first is 0)
     classTeachers.append(0) #there is no 0 class
-
+    # print(loc) # should start at 123
     # adding correct professor for each class
+    # print(numClasses)
     for i in range(numClasses):
         loc += 1
+        # print(i)
         tc = lines[loc].split('\t')
-        classTeachers.append(int(tc[1]))
+        # print(tc)
+        requiredProfessor = int(tc[1])
+        majorContributedTo = tc[2]
+        # print(tc)
+        new_class = mech.Class(int(tc[0]), requiredProfessor, majorContributedTo, "TODO", False,i+1)
+        # print(new_class)
+        classes.append(new_class)
 
     file.close() #close file
-    return numTimeSlots, rooms, numClasses, times
+    return numTimeSlots, rooms, classes, times
 
 constraints_filename = "f2_constraints.txt"
-numTimeSlots, maxRoomSize, numClasses, timeSlots = parseConstraints(constraints_filename)
+numTimeSlots, maxRoomSize, classes, timeSlots = parseConstraints(constraints_filename)
 
 print(f"Number of Time Slots: {numTimeSlots}")
 # print(maxRoomSize.str)
 # for room in maxRoomSize:
 #     print(f"{room.name} \t {room.capacity}")
 #     # print(f"{room[1]}\t{room[0]}")
-print(numClasses)
+# print(classes) # ? RN it's just printing the uh. the teacher
+for clss in classes:
+    print(f"{clss.name}\t{clss.professor}\t{clss.major}")
+# print(len(classes))
 # print(timeSlots)
-for time in timeSlots:
-    print(f"{time.start_time}\t{time.end_time}\t{time.days_of_week}")
+# for time in timeSlots:
+#     print(f"{time.start_time}\t{time.end_time}\t{time.days_of_week}")
