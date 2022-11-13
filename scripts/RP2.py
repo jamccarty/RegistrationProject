@@ -5,7 +5,7 @@ import DataStructures as ds
 import classroomMechanics as mech
 import sys
 
-
+globalStudentCount2 = 0
 '''
 parses contents of constraints.txt
 params:
@@ -145,7 +145,7 @@ def studentsArray(studentsFilename):
     file.close()
     return students
 
-def accessibleSchedule(schedule, rooms, numTimes, globalStudentCount, access_classes, access_esems, whoPrefers, student_schedules, prof_schedules, notAddedDict):
+def accessibleSchedule(schedule, rooms, numTimes, access_classes, access_esems, whoPrefers, student_schedules, prof_schedules, notAddedDict):
     access_rooms = []
     for i in range(len(access_classes)):
         access_classes[i] = ds.arrayToLinkedList(access_classes[i])
@@ -159,8 +159,8 @@ def accessibleSchedule(schedule, rooms, numTimes, globalStudentCount, access_cla
 
     taken_time_room_combos = []
 
-    schedule, globalStudentCount = miniSchedule(schedule, access_esems, access_rooms, [0], 
-                                                globalStudentCount, student_schedules, prof_schedules, 
+    schedule = miniSchedule(schedule, access_esems, access_rooms, [0], 
+                                                student_schedules, prof_schedules, 
                                                 whoPrefers, taken_time_room_combos, notAddedDict)
 
     # for domain in range(len(access_esems)):
@@ -189,8 +189,8 @@ def accessibleSchedule(schedule, rooms, numTimes, globalStudentCount, access_cla
     #             c = access_classes[domain].popFront()
     #             notAddedDict.update({c.name: 'not enough accessible rooms'})
 
-    schedule, globalStudentCount = miniSchedule(schedule, access_classes, access_rooms, range(numTimes)[1:], 
-                                                globalStudentCount, student_schedules, prof_schedules, 
+    schedule= miniSchedule(schedule, access_classes, access_rooms, range(numTimes)[1:], 
+                                                student_schedules, prof_schedules, 
                                                 whoPrefers, taken_time_room_combos, notAddedDict)
 
     return taken_time_room_combos
@@ -365,7 +365,7 @@ def mergeSort(arr, dir):
             k += 1
  
 
-def miniSchedule(schedule, classes, maxRoomSize, timeSlots, globalStudentCount, studentSchedules, profSchedules, whoPrefers, taken_time_room_combos, notAddedDict):
+def miniSchedule(schedule, classes, maxRoomSize, timeSlots, studentSchedules, profSchedules, whoPrefers, taken_time_room_combos, notAddedDict):
     holdClass = ds.LinkedList()
     
     for room in maxRoomSize:
@@ -373,7 +373,7 @@ def miniSchedule(schedule, classes, maxRoomSize, timeSlots, globalStudentCount, 
             if (time, room.id) in taken_time_room_combos:
                 continue
             if classes[room.domain.id].isEmpty():
-                return schedule, globalStudentCount
+                return schedule
 
             clss = classes[room.domain.id].popFront()
 
@@ -419,7 +419,8 @@ def miniSchedule(schedule, classes, maxRoomSize, timeSlots, globalStudentCount, 
                     clss.enrolled.append(x)
                     
                     studentSchedules[x].append(time)
-                    globalStudentCount+=1
+                    global globalStudentCount2
+                    globalStudentCount2 += 1
 
             clss.room = room
             clss.time = time
@@ -428,9 +429,9 @@ def miniSchedule(schedule, classes, maxRoomSize, timeSlots, globalStudentCount, 
             # print(clss.name)
         for r in maxRoomSize[:room.id]:
            conflictSchedule(schedule[r.id - 1], whoPrefers, studentSchedules, profSchedules, globalStudentCount)
-    return schedule, globalStudentCount
+    return schedule
 
-def conflictSchedule(room_schedule, whoPrefers, studentSchedules, profSchedules, globalStudentCount):
+def conflictSchedule(room_schedule, whoPrefers, studentSchedules, profSchedules):
     for time in range(len(room_schedule[1:])): #non esems
         currClass = room_schedule[time]
         orgStu = []
@@ -484,8 +485,9 @@ def conflictSchedule(room_schedule, whoPrefers, studentSchedules, profSchedules,
             swpStu = []
         if maxSwpIndex != -1:
             #print(f"org enrollment: {len(room_schedule[time].enrolled)} + {len(room_schedule[maxSwpIndex].enrolled)} -> {len(maxSwpStu[0])} + {len(maxSwpStu[1])}")
-            globalStudentCount -= len(room_schedule[time].enrolled)
-            globalStudentCount -= len(room_schedule[maxSwpIndex].enrolled)
+            global globalStudentCount2
+            globalStudentCount2 -= len(room_schedule[time].enrolled)
+            globalStudentCount2 -= len(room_schedule[maxSwpIndex].enrolled)
 
             room_schedule[time].enrolled = maxSwpStu[0]
             room_schedule[maxSwpIndex].enrolled = maxSwpStu[1]
@@ -499,8 +501,7 @@ def conflictSchedule(room_schedule, whoPrefers, studentSchedules, profSchedules,
                 studentSchedules[student].append(time)
 
             room_schedule[time], room_schedule[maxSwpIndex] = room_schedule[maxSwpIndex], room_schedule[time]
-            globalStudentCount += len(room_schedule[time].enrolled) + len(room_schedule[maxSwpIndex].enrolled)
-            #print("GSCOUNT: ", globalStudentCount)
+            globalStudentCount2 += len(room_schedule[time].enrolled) + len(room_schedule[maxSwpIndex].enrolled)
 
 
 def classSchedule(constraints_filename, students_filename):
@@ -517,8 +518,7 @@ def classSchedule(constraints_filename, students_filename):
     
     # initialize preferred students and Class ranked lists
     studentPrefLists, whoPrefers, esems, access_classes, access_esems = classQ(students_filename, classes, numClasses)
-    globalStudentCount = 0
-
+    
     # innit student's schedules
     studentSchedules = generateSchedules(len(studentPrefLists))
     profSchedules = generateSchedules(int(numClasses / 2))
@@ -531,19 +531,19 @@ def classSchedule(constraints_filename, students_filename):
             schedule[r].append(None) 
 
     notAddedDict = {} #dictionary of reasons for why each unadded class went unadded
-    taken_time_room_combos = accessibleSchedule(schedule, maxRoomSize, numTimeSlots, globalStudentCount,
+    taken_time_room_combos = accessibleSchedule(schedule, maxRoomSize, numTimeSlots,
                                                 access_classes, access_esems, whoPrefers, 
                                                 studentSchedules, profSchedules, notAddedDict)
     #schedule esems for 0 time slot
-    schedule, globalStudentCount = miniSchedule(schedule, esems, maxRoomSize, [0], 
-                                                globalStudentCount, studentSchedules, profSchedules, 
+    schedule = miniSchedule(schedule, esems, maxRoomSize, [0], 
+                                                studentSchedules, profSchedules, 
                                                 whoPrefers, taken_time_room_combos, notAddedDict)
     #0 non-accomodations classes for all other time slots
-    schedule, globalStudentCount = miniSchedule(schedule, classes, maxRoomSize, range(numTimeSlots)[1:],
-                                                globalStudentCount, studentSchedules, profSchedules, 
+    schedule= miniSchedule(schedule, classes, maxRoomSize, range(numTimeSlots)[1:],
+                                                studentSchedules, profSchedules, 
                                                 whoPrefers, taken_time_room_combos, notAddedDict)
 
-    return schedule, globalStudentCount, globalStudentCount / ((len(studentPrefLists) - 1) * 4), notAddedDict, (len(studentPrefLists) - 1)*4
+    return schedule, globalStudentCount2 / ((len(studentPrefLists) - 1) * 4), notAddedDict, (len(studentPrefLists) - 1)*4
 
 #numTimeSlots, maxRoomSize, classes, domains = parseConstraints("scripts/esemtinyc.txt")
 # studentPreferences, whoPrefers = classQ("scripts/esemtinyp.txt", classes)
@@ -555,7 +555,7 @@ if len(sys.argv) >= 2:
     user_prefs_file = sys.argv[2]
 
 start = float(datetime.datetime.now().microsecond / 1000.0)
-schedule, globalStudentCount, score, notAddedDict, totalStudents = classSchedule(user_consts_file, user_prefs_file)
+schedule, score, notAddedDict, totalStudents = classSchedule(user_consts_file, user_prefs_file)
 end = float(datetime.datetime.now().microsecond / 1000.0)
 #schedule, globalStudentCount, score, notAddedDict = classSchedule("testE/constraints_0", "testE/prefs_0")
 
@@ -568,6 +568,6 @@ for time in schedule:
             file.write(bytes(f"{clss}\n", "UTF-8"))
 
 print(f"Percent Assigned: {score}")
-print(f"# of Assigned Students: {globalStudentCount}\t Total Possible Assignments: {totalStudents}")
+print(f"# of Assigned Students: {globalStudentCount2}\t Total Possible Assignments: {totalStudents}")
 print(f"Time (milli): {(end-start)}")
 print(notAddedDict)
