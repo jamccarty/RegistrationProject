@@ -410,8 +410,8 @@ def miniSchedule(schedule, classes, maxRoomSize, timeSlots, globalStudentCount, 
             profSchedules[clss.professor].append(time)
             for student in whoPrefers[clss.name]:
                 x = student.id
-                # if(x == 55):
-                #     print(f"miniSchedule: {x} {studentSchedules[x]} for class {clss.name} at time {time}")
+                if(x == 55):
+                    print(f"miniSchedule: {x} {studentSchedules[x]} for class {clss.name} at time {time}")
                 # print(f"{x} - {studentSchedules[x]}")
                 if len(clss.enrolled) == room.capacity:
                     break
@@ -492,9 +492,13 @@ def conflictSchedule(room_schedule, whoPrefers, studentSchedules, profSchedules,
 
 
             for student in room_schedule[time].enrolled:
+                if student == 55:
+                    print(f"room_schedule[time={time}] student55 = {studentSchedules[student]}")
                 studentSchedules[student].remove(time)
                 studentSchedules[student].append(maxSwpIndex)
             for student in room_schedule[maxSwpIndex].enrolled:
+                if student == 55:
+                    print(f"room_schedule[maxSwpIndex={maxSwpIndex}] student55 = {studentSchedules[student]}")
                 studentSchedules[student].remove(maxSwpIndex)
                 studentSchedules[student].append(time)
 
