@@ -157,11 +157,14 @@ def accessibleSchedule(schedule, rooms, numTimes, globalStudentCount, access_cla
     mergeSort(access_rooms, 1)
 
     taken_time_room_combos = []
-
-    for r in access_rooms:
-        domain = r.domain.id
+    print("access_esems")
+    for domain in range(len(access_esems)):
         for c in access_esems[domain]:
+            if c is None:
+                continue
+            mech.printClassArray(access_esems[domain])
             if c.preferredStudents <= r.capacity and not prof_schedules[c.professor].contains(0):
+                print(c.name)
                 if c.name in notAddedDict:
                     notAddedDict.pop(c.name)
                 schedule[r.id - 1][0] = c
@@ -182,7 +185,7 @@ def accessibleSchedule(schedule, rooms, numTimes, globalStudentCount, access_cla
             while not access_classes[domain].isEmpty():
                 c = access_classes[domain].popFront()
                 notAddedDict.update({c.name: 'not enough accessible rooms'})
-
+    print("access classes")
     schedule, globalStudentCount = miniSchedule(schedule, access_classes, access_rooms, range(numTimes)[1:], 
                                                 globalStudentCount, student_schedules, prof_schedules, 
                                                 whoPrefers, taken_time_room_combos, notAddedDict)
@@ -246,9 +249,11 @@ def classQ(studentsFilename, classes, numClasses):
                 if tempClasses[pref].isEsem == True:
                     access_esems[d].append(tempClasses[pref])
                     esems[d][pref] = None
+                    classes[d][pref] = None
                 else:
                     access_classes[d].append(tempClasses[pref])
                     classes[d][pref] = None
+                    esems[d][pref] = None
                 tempClasses[pref] = None #no longer in tempClasses list -- in classes that need accessibility
     count = 0
     for clss in tempClasses:
@@ -273,14 +278,22 @@ def classQ(studentsFilename, classes, numClasses):
     for i in range(len(classes)):
         classes[i] = ds.removeBlanks(classes[i])
         mergeSort(classes[i], 0)
+        # print(f"classes[{i}]: ",end="")
+        # mech.printClassArray(classes[i])
         classes[i] = ds.arrayToLinkedList(classes[i])
 
         esems[i] = ds.removeBlanks(esems[i])
         mergeSort(esems[i], 0)
+        # print(f"esems[{i}]: ",end="")
+        # mech.printClassArray(esems[i])
         esems[i] = ds.arrayToLinkedList(esems[i])
 
         mergeSort(access_esems[i], 1)
+        print(f"access_esems[{i}]: ",end="")
+        mech.printClassArray(access_esems[i])
         mergeSort(access_classes[i], 1)
+        # print(f"access_classes[{i}]: ",end="")
+        # mech.printClassArray(access_classes[i])
 
     return studentPreferences, whoPrefers, esems, access_classes, access_esems
 
@@ -384,7 +397,6 @@ def miniSchedule(schedule, classes, maxRoomSize, timeSlots, globalStudentCount, 
                     break
             
                 clss = classes[room.domain.id].popFront()
-
             if skipTime == True:
                 classes[room.domain.id] = holdClass
                 continue
@@ -409,6 +421,7 @@ def miniSchedule(schedule, classes, maxRoomSize, timeSlots, globalStudentCount, 
             clss.room = room
             clss.time = time
             schedule[clss.room.id - 1][time] = clss
+            # print(clss.name)
         for r in maxRoomSize[:room.id]:
             conflictSchedule(schedule[r.id - 1], whoPrefers, studentSchedules, profSchedules, globalStudentCount)
 
@@ -515,12 +528,12 @@ def classSchedule(constraints_filename, students_filename):
     taken_time_room_combos = accessibleSchedule(schedule, maxRoomSize, numTimeSlots, globalStudentCount,
                                                 access_classes, access_esems, whoPrefers, 
                                                 studentSchedules, profSchedules, notAddedDict)
-
+    print("esems")
     #schedule esems for 0 time slot
     schedule, globalStudentCount = miniSchedule(schedule, esems, maxRoomSize, [0], 
                                                 globalStudentCount, studentSchedules, profSchedules, 
                                                 whoPrefers, taken_time_room_combos, notAddedDict)
-
+    print("classes")
     #0 non-accomodations classes for all other time slots
     schedule, globalStudentCount = miniSchedule(schedule, classes, maxRoomSize, range(numTimeSlots)[1:],
                                                 globalStudentCount, studentSchedules, profSchedules, 
