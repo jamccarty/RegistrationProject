@@ -242,6 +242,24 @@ class Room:
     def __str__(self):
         return f"{self.id}"
 
+
+def printClassArray(arr):
+    print("[",end="")
+    for i in arr:
+        if not i is None:
+            print(f"{i.name} ", end="")
+        else:
+            print(f"None ", end="")
+    print("]")
+
+def printRoomArray(arr):
+    print("[",end="")
+    for i in arr:
+        if not i is None:
+            print(f"{i.id}-{i.capacity} ", end="")
+        else:
+            print(f"None ", end="")
+    print("]")
 # year3NonMajor1 = Student(1, 3, 1, 3) #id, class year, major preferredClassMajor
 # year3NonMajor2 = Student(2, 3, 2, 3)
 # year3Major = Student(3, 3, 3, 3)

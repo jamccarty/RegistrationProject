@@ -232,6 +232,7 @@ def classQ(studentsFilename, classes, numClasses):
         for clss in domain:
             if not clss is None:
                 tempClasses[clss.name] = clss
+
     # for each class in each student preference list, increment that classes preference level
     i = -1
     whoPrefers.append([]) #0 prefer class 0 which doesn't exist --> I don't know what this does and I'm too scared to change it
@@ -244,11 +245,14 @@ def classQ(studentsFilename, classes, numClasses):
                 # tempClasses[pref].needsAccessibility = True
                 if tempClasses[pref].isEsem == True:
                     access_esems[d].append(tempClasses[pref])
+                    esems[d][pref] = None
                 else:
                     access_classes[d].append(tempClasses[pref])
+                    classes[d][pref] = None
                 tempClasses[pref] = None #no longer in tempClasses list -- in classes that need accessibility
-
+    count = 0
     for clss in tempClasses:
+        count += 1
         if not clss is None:
             if clss.isEsem == True:
                 esems[clss.domain.id][clss.name] = clss
@@ -353,6 +357,7 @@ def miniSchedule(schedule, classes, maxRoomSize, timeSlots, globalStudentCount, 
     for room in maxRoomSize:
         for time in timeSlots:
             if (time, room.id) in taken_time_room_combos:
+                print(f"({time}, {room}) taken")
                 continue
             if classes[room.domain.id].isEmpty():
                 return schedule, globalStudentCount
@@ -398,13 +403,14 @@ def miniSchedule(schedule, classes, maxRoomSize, timeSlots, globalStudentCount, 
                 if(not studentSchedules[x].contains(time)):
                     clss.enrolled.append(x)
                     
-                    studentSchedules[x].append(x)
+                    studentSchedules[x].append(time)
                     globalStudentCount+=1
 
             clss.room = room
             clss.time = time
             schedule[clss.room.id - 1][time] = clss
-        conflictSchedule(schedule[room.id - 1], whoPrefers, studentSchedules, profSchedules, globalStudentCount)
+        for r in maxRoomSize[:room.id]:
+            conflictSchedule(schedule[r.id - 1], whoPrefers, studentSchedules, profSchedules, globalStudentCount)
 
     return schedule, globalStudentCount
 

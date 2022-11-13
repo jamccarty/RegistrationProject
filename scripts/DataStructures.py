@@ -11,13 +11,12 @@ class LinkedList:
         self.size = 0
 
     def __str__(self) -> str:
-        s = "["
+        s = ""
         loc = self.head
 
         while loc != None:
-            s += f"{loc.data} "
+            s += f"[{loc.data}] "
             loc = loc.next
-        s += "]"
         
         return s
 
@@ -190,6 +189,10 @@ def mergeSort(arr, dir):
 
 def printLL(LL):
     loc = LL.head
+    if LL.head == None:
+        print(" ")
+        return
+    print(f"[")
     while loc != None:
-        print(f"{loc.data} -> ", end='')
+        print(f"{loc.data.name}, ", end='')
         loc = loc.next
