@@ -149,6 +149,7 @@ def accessibleSchedule(schedule, rooms, numTimes, globalStudentCount, access_cla
     access_rooms = []
     for i in range(len(access_classes)):
         access_classes[i] = ds.arrayToLinkedList(access_classes[i])
+        access_esems[i] = ds.arrayToLinkedList(access_esems[i])
 
     for r in rooms:
         if r.accessible == True:
@@ -157,31 +158,36 @@ def accessibleSchedule(schedule, rooms, numTimes, globalStudentCount, access_cla
     mergeSort(access_rooms, 1)
 
     taken_time_room_combos = []
-    for domain in range(len(access_esems)):
-        for c in access_esems[domain]:
-            if c is None:
-                continue
-            if c.preferredStudents <= r.capacity and not prof_schedules[c.professor].contains(0):
-                if c.name in notAddedDict:
-                    notAddedDict.pop(c.name)
-                schedule[r.id - 1][0] = c
-                c.time = 0
-                c.room = r
-                for x in whoPrefers[c.name]:
-                    # print(x)
-                    student = x.id
-                    c.enrolled.append(student)
-                    student_schedules[student].append(0)
-                    taken_time_room_combos.append((0, r.id))
-            else:
-                notAddedDict.update({c.name:'not enough accessible rooms'})
-    if(len(access_rooms) == 0):
-        for domain in range(len(access_classes)):
-            for c in access_esems[domain]:
-                notAddedDict.update({c.name: 'not enough accessible rooms'})
-            while not access_classes[domain].isEmpty():
-                c = access_classes[domain].popFront()
-                notAddedDict.update({c.name: 'not enough accessible rooms'})
+
+    schedule, globalStudentCount = miniSchedule(schedule, access_esems, access_rooms, [0], 
+                                                globalStudentCount, student_schedules, prof_schedules, 
+                                                whoPrefers, taken_time_room_combos, notAddedDict)
+
+    # for domain in range(len(access_esems)):
+    #     for c in access_esems[domain]:
+    #         if c is None:
+    #             continue
+    #         if c.preferredStudents <= r.capacity and not prof_schedules[c.professor].contains(0):
+    #             if c.name in notAddedDict:
+    #                 notAddedDict.pop(c.name)
+    #             schedule[r.id - 1][0] = c
+    #             c.time = 0
+    #             c.room = r
+    #             for x in whoPrefers[c.name]:
+    #                 # print(x)
+    #                 student = x.id
+    #                 c.enrolled.append(student)
+    #                 student_schedules[student].append(0)
+    #                 taken_time_room_combos.append((0, r.id))
+    #         else:
+    #             notAddedDict.update({c.name:'not enough accessible rooms'})
+    # if(len(access_rooms) == 0):
+    #     for domain in range(len(access_classes)):
+    #         for c in access_esems[domain]:
+    #             notAddedDict.update({c.name: 'not enough accessible rooms'})
+    #         while not access_classes[domain].isEmpty():
+    #             c = access_classes[domain].popFront()
+    #             notAddedDict.update({c.name: 'not enough accessible rooms'})
 
     schedule, globalStudentCount = miniSchedule(schedule, access_classes, access_rooms, range(numTimes)[1:], 
                                                 globalStudentCount, student_schedules, prof_schedules, 
@@ -404,8 +410,8 @@ def miniSchedule(schedule, classes, maxRoomSize, timeSlots, globalStudentCount, 
             profSchedules[clss.professor].append(time)
             for student in whoPrefers[clss.name]:
                 x = student.id
-                if(x == 55):
-                    print(f"miniSchedule: {x} {studentSchedules[x]} for class {clss.name} at time {time}")
+                # if(x == 55):
+                #     print(f"miniSchedule: {x} {studentSchedules[x]} for class {clss.name} at time {time}")
                 # print(f"{x} - {studentSchedules[x]}")
                 if len(clss.enrolled) == room.capacity:
                     break
@@ -418,6 +424,7 @@ def miniSchedule(schedule, classes, maxRoomSize, timeSlots, globalStudentCount, 
             clss.room = room
             clss.time = time
             schedule[clss.room.id - 1][time] = clss
+            taken_time_room_combos.append((time, room.id))
             # print(clss.name)
         for r in maxRoomSize[:room.id]:
             conflictSchedule(schedule[r.id - 1], whoPrefers, studentSchedules, profSchedules, globalStudentCount)
@@ -535,7 +542,7 @@ def classSchedule(constraints_filename, students_filename):
                                                 globalStudentCount, studentSchedules, profSchedules, 
                                                 whoPrefers, taken_time_room_combos, notAddedDict)
 
-    return schedule, globalStudentCount, globalStudentCount / ((len(studentPrefLists) - 1) * 4), notAddedDict, studentSchedules
+    return schedule, globalStudentCount, globalStudentCount / ((len(studentPrefLists) - 1) * 4), notAddedDict
 
 #numTimeSlots, maxRoomSize, classes, domains = parseConstraints("scripts/esemtinyc.txt")
 # studentPreferences, whoPrefers = classQ("scripts/esemtinyp.txt", classes)
@@ -559,14 +566,6 @@ for time in schedule:
     for clss in time:
         if not clss is None:
             file.write(bytes(f"{clss}\n", "UTF-8"))
-
-for room in schedule:
-    for clss in room:
-        if clss is None:
-            continue
-        for student in clss.enrolled:
-            if student == 55:
-                print(f"{student}: {ss[student]} for class {clss.name} at time {clss.time}")
 
 print(score)
 print(notAddedDict)
