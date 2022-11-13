@@ -410,8 +410,6 @@ def miniSchedule(schedule, classes, maxRoomSize, timeSlots, globalStudentCount, 
             profSchedules[clss.professor].append(time)
             for student in whoPrefers[clss.name]:
                 x = student.id
-                if(x == 55):
-                    print(f"miniSchedule: {x} {studentSchedules[x]} for class {clss.name} at time {time}")
                 # print(f"{x} - {studentSchedules[x]}")
                 if len(clss.enrolled) == room.capacity:
                     break
@@ -421,6 +419,9 @@ def miniSchedule(schedule, classes, maxRoomSize, timeSlots, globalStudentCount, 
                     studentSchedules[x].append(time)
                     globalStudentCount+=1
 
+                    # print(f"miniSchedule: {x} {studentSchedules[x]} for class {clss.name} at time {time}")
+            if clss.name == 47 or clss.name == 38:
+                print(f"{clss.name} - {len(clss.enrolled)}")
             clss.room = room
             clss.time = time
             schedule[clss.room.id - 1][time] = clss
@@ -547,7 +548,7 @@ def classSchedule(constraints_filename, students_filename):
                                                 globalStudentCount, studentSchedules, profSchedules, 
                                                 whoPrefers, taken_time_room_combos, notAddedDict)
 
-    return schedule, globalStudentCount, globalStudentCount / ((len(studentPrefLists) - 1) * 4), notAddedDict, (len(studentPrefLists) - 1)*4
+    return schedule, globalStudentCount, globalStudentCount / ((len(studentPrefLists) - 1) * 4), notAddedDict, (len(studentPrefLists) - 1)*4, studentSchedules
 
 #numTimeSlots, maxRoomSize, classes, domains = parseConstraints("scripts/esemtinyc.txt")
 # studentPreferences, whoPrefers = classQ("scripts/esemtinyp.txt", classes)
@@ -559,7 +560,7 @@ if len(sys.argv) >= 2:
     user_prefs_file = sys.argv[2]
 
 start = float(datetime.datetime.now().microsecond / 1000.0)
-schedule, globalStudentCount, score, notAddedDict, totalStudents = classSchedule(user_consts_file, user_prefs_file)
+schedule, globalStudentCount, score, notAddedDict, totalStudents, ss = classSchedule(user_consts_file, user_prefs_file)
 end = float(datetime.datetime.now().microsecond / 1000.0)
 #schedule, globalStudentCount, score, notAddedDict = classSchedule("testE/constraints_0", "testE/prefs_0")
 
@@ -570,6 +571,8 @@ for time in schedule:
     for clss in time:
         if not clss is None:
             file.write(bytes(f"{clss}\n", "UTF-8"))
+            if len(clss.enrolled) > clss.room.capacity:
+                print(f"class {clss.name} room {clss.room.id} - {len(clss.enrolled)} in room of size {clss.room.capacity}")
 
 print(f"Percent Assigned: {score}")
 print(f"# of Assigned Students: {globalStudentCount}\t Total Possible Assignments: {totalStudents}")
