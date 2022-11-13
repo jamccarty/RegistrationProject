@@ -532,7 +532,7 @@ def classSchedule(constraints_filename, students_filename):
                                                 globalStudentCount, studentSchedules, profSchedules, 
                                                 whoPrefers, taken_time_room_combos, notAddedDict)
 
-    return schedule, globalStudentCount, globalStudentCount / ((len(studentPrefLists) - 1) * 4), notAddedDict
+    return schedule, globalStudentCount, globalStudentCount / ((len(studentPrefLists) - 1) * 4), notAddedDict, (len(studentPrefLists) - 1)*4
 
 #numTimeSlots, maxRoomSize, classes, domains = parseConstraints("scripts/esemtinyc.txt")
 # studentPreferences, whoPrefers = classQ("scripts/esemtinyp.txt", classes)
@@ -544,9 +544,11 @@ if len(sys.argv) >= 2:
     user_prefs_file = sys.argv[2]
 
 start = float(datetime.datetime.now().microsecond / 1000.0)
-schedule, globalStudentCount, score, notAddedDict = classSchedule(user_consts_file, user_prefs_file)
+schedule, globalStudentCount, score, notAddedDict, totalStudents = classSchedule(user_consts_file, user_prefs_file)
 end = float(datetime.datetime.now().microsecond / 1000.0)
-print(f"time taken (ms): {end - start}")
+print(f"Percent Assigned: {score}")
+print(f"# of Assigned Students: {globalStudentCount}\t Total Possible Assignments: {totalStudents}")
+print(f"Time (milli): {(end-start)}")
 #schedule, globalStudentCount, score, notAddedDict = classSchedule("testE/constraints_0", "testE/prefs_0")
 
 file = open("mod_output.txt", "wb")
