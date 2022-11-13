@@ -404,6 +404,9 @@ def miniSchedule(schedule, classes, maxRoomSize, timeSlots, globalStudentCount, 
             profSchedules[clss.professor].append(time)
             for student in whoPrefers[clss.name]:
                 x = student.id
+                if(x == 55):
+                    print(f"miniSchedule: {x} {studentSchedules[x]} for class {clss.name} at time {time}")
+                # print(f"{x} - {studentSchedules[x]}")
                 if len(clss.enrolled) == room.capacity:
                     break
                 if(not studentSchedules[x].contains(time)):
@@ -532,7 +535,7 @@ def classSchedule(constraints_filename, students_filename):
                                                 globalStudentCount, studentSchedules, profSchedules, 
                                                 whoPrefers, taken_time_room_combos, notAddedDict)
 
-    return schedule, globalStudentCount, globalStudentCount / ((len(studentPrefLists) - 1) * 4), notAddedDict
+    return schedule, globalStudentCount, globalStudentCount / ((len(studentPrefLists) - 1) * 4), notAddedDict, studentSchedules
 
 #numTimeSlots, maxRoomSize, classes, domains = parseConstraints("scripts/esemtinyc.txt")
 # studentPreferences, whoPrefers = classQ("scripts/esemtinyp.txt", classes)
@@ -544,8 +547,9 @@ if len(sys.argv) >= 2:
     user_prefs_file = sys.argv[2]
 
 start = float(datetime.datetime.now().microsecond / 1000.0)
-schedule, globalStudentCount, score, notAddedDict = classSchedule(user_consts_file, user_prefs_file)
+schedule, globalStudentCount, score, notAddedDict, ss = classSchedule(user_consts_file, user_prefs_file)
 end = float(datetime.datetime.now().microsecond / 1000.0)
+
 print(f"time taken (ms): {end - start}")
 #schedule, globalStudentCount, score, notAddedDict = classSchedule("testE/constraints_0", "testE/prefs_0")
 
@@ -556,6 +560,14 @@ for time in schedule:
     for clss in time:
         if not clss is None:
             file.write(bytes(f"{clss}\n", "UTF-8"))
+
+for room in schedule:
+    for clss in room:
+        if clss is None:
+            continue
+        for student in clss.enrolled:
+            if student == 55:
+                print(f"{student}: {ss[student]} for class {clss.name} at time {clss.time}")
 
 print(score)
 print(notAddedDict)
