@@ -426,8 +426,8 @@ def miniSchedule(schedule, classes, maxRoomSize, timeSlots, globalStudentCount, 
             schedule[clss.room.id - 1][time] = clss
             taken_time_room_combos.append((time, room.id))
             # print(clss.name)
-        for r in maxRoomSize[:room.id]:
-            conflictSchedule(schedule[r.id - 1], whoPrefers, studentSchedules, profSchedules, globalStudentCount)
+        #for r in maxRoomSize[:room.id]:
+           # conflictSchedule(schedule[r.id - 1], whoPrefers, studentSchedules, profSchedules, globalStudentCount)
     return schedule, globalStudentCount
 
 def conflictSchedule(room_schedule, whoPrefers, studentSchedules, profSchedules, globalStudentCount):
@@ -542,7 +542,7 @@ def classSchedule(constraints_filename, students_filename):
                                                 globalStudentCount, studentSchedules, profSchedules, 
                                                 whoPrefers, taken_time_room_combos, notAddedDict)
 
-    return schedule, globalStudentCount, globalStudentCount / ((len(studentPrefLists) - 1) * 4), notAddedDict
+    return schedule, globalStudentCount, globalStudentCount / ((len(studentPrefLists) - 1) * 4), notAddedDict, (len(studentPrefLists) - 1)*4
 
 #numTimeSlots, maxRoomSize, classes, domains = parseConstraints("scripts/esemtinyc.txt")
 # studentPreferences, whoPrefers = classQ("scripts/esemtinyp.txt", classes)
@@ -554,9 +554,8 @@ if len(sys.argv) >= 2:
     user_prefs_file = sys.argv[2]
 
 start = float(datetime.datetime.now().microsecond / 1000.0)
-schedule, globalStudentCount, score, notAddedDict = classSchedule(user_consts_file, user_prefs_file)
+schedule, globalStudentCount, score, notAddedDict, totalStudents = classSchedule(user_consts_file, user_prefs_file)
 end = float(datetime.datetime.now().microsecond / 1000.0)
-print(f"time taken (ms): {end - start}")
 #schedule, globalStudentCount, score, notAddedDict = classSchedule("testE/constraints_0", "testE/prefs_0")
 
 file = open("mod_output.txt", "wb")
@@ -567,5 +566,7 @@ for time in schedule:
         if not clss is None:
             file.write(bytes(f"{clss}\n", "UTF-8"))
 
-print(score)
+print(f"Percent Assigned: {score}")
+print(f"# of Assigned Students: {globalStudentCount}\t Total Possible Assignments: {totalStudents}")
+print(f"Time (milli): {(end-start)}")
 print(notAddedDict)
