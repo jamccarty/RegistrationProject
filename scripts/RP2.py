@@ -426,8 +426,8 @@ def miniSchedule(schedule, classes, maxRoomSize, timeSlots, globalStudentCount, 
             schedule[clss.room.id - 1][time] = clss
             taken_time_room_combos.append((time, room.id))
             # print(clss.name)
-        #for r in maxRoomSize[:room.id]:
-           # conflictSchedule(schedule[r.id - 1], whoPrefers, studentSchedules, profSchedules, globalStudentCount)
+        for r in maxRoomSize[:room.id]:
+           conflictSchedule(schedule[r.id - 1], whoPrefers, studentSchedules, profSchedules, globalStudentCount)
     return schedule, globalStudentCount
 
 def conflictSchedule(room_schedule, whoPrefers, studentSchedules, profSchedules, globalStudentCount):
@@ -500,6 +500,7 @@ def conflictSchedule(room_schedule, whoPrefers, studentSchedules, profSchedules,
 
             room_schedule[time], room_schedule[maxSwpIndex] = room_schedule[maxSwpIndex], room_schedule[time]
             globalStudentCount += len(room_schedule[time].enrolled) + len(room_schedule[maxSwpIndex].enrolled)
+            #print("GSCOUNT: ", globalStudentCount)
 
 
 def classSchedule(constraints_filename, students_filename):
