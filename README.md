@@ -6,3 +6,8 @@ A greedy algorithm designed to intake:
   - a set of r rooms and their associated sizes (i.e. how many students each room can hold)
 
 and return a valid schedule of classes and their associated enrolled students. Runs with a complexity of O(cs + rlogr).
+
+# Usage
+Run `get_bmc_info.py` or `get_haverford_info.py`on the .csv file you wish to generate a schedule from. Then, run `RP_bmc.py` as such:
+
+`python RP_bmc.py <constraints.txt> <student_prefs.txt>`
