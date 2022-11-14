@@ -504,6 +504,7 @@ def mergeSort(arr, dir):
 '''
     For each room, check to see if swapping the timeslots of two classes will increase
     the number of students able to take classes they prefer. If this is true, then perform the swap
+
     PARAMS:
         schedule -- the assignment of classes/rooms/professors/students
         whoPrefers -- the list of student's preferences
