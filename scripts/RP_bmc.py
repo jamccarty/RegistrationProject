@@ -9,6 +9,7 @@ import random
 # STEM ID == 0, HUM (humanities) ID == 1
 stem_majors = ["MATH","PSYC","BIOL","PHYS","CMSC","GEOL","ECON"]
 accesible_buildings = ["CAN", "CARP","DAL","GO","PK",]
+globalStudentCount2 = 0
 
 class Class:
 
@@ -67,12 +68,15 @@ class Class:
                 domain - the comain that class falls under
                 isEsem - if the class is an Esem
                 id - a numerical ID for that class
+        classDict -- list of all class IDs
         times -- array of TimeSlot() objects:
             Each TimeSlot() object in times holds the following pieces of information:
                 id - the id of the time
                 start_time  - the start time, float
                 end_time - the end time, float
                 days_of_week - the days of the week it occurs on, array of strings
+        majors -- list of valid majors
+    # TODO: add Esems
 '''
 def parseConstraints(filename):
     # open file, split by line
@@ -130,71 +134,75 @@ def parseConstraints(filename):
         times.append(time_slot)
 
     # get number of rooms
-    count = 1 # this is the "ID"
     room = lines[1 + numTimeSlots].split('\t')
     numRooms = int(room[1]) #number of rooms total
     rooms = []
-    classes = []    
+    classes = []
+    classDict = []
+
+    count = 1 # this is the "ID"
 
     # initialize rooms array -- array of tuples (room size, room id)
     # (this is so that after merge sorting, each size remains paired with correct room id)
     for line in lines[2+numTimeSlots:2 + numTimeSlots + numRooms]:
         x = line.split('\t')
-        # get the domain of the room
+
         if x[0][:2] == "PK":
-            domain = mech.domain("STEM",0)
+            domain = mech.domain("STEM", 0)
         else:
             domain = mech.domain("HUM", 1)
-        
-        # get whether the classroom is accessible or not
+
         if x[0][:2] in accesible_buildings or x[0][:3] in accesible_buildings:
             accesibility = True
         else:
             accesibility = False
-        new_room = mech.Room(x[0], int(x[1]), domain, accesibility)
+        new_room = mech.Room(count, x[0], int(x[1]), domain, accesibility)
         rooms.append(new_room)
         count += 1
     
     # Get Number of Classes
     loc = 2 + numTimeSlots + numRooms 
     x = lines[loc].split('\t')
-    # print(x)
     numClasses = int(x[1])
-    classes.append([])
-    classes.append([])
-    for i in range(2):
-        classes[i].append(None)
-        for c in range(numClasses):
-            classes[i].append(None) 
 
     # Get Number of Class Teachers
     loc += 1
     x = lines[loc].split('\t')
 
+    # initialize list of classes
+    classes.append([])
+    classes.append([])
+    for i in range(2):
+        classes[i].append(None)
+        for c in range(numClasses):
+            classes[i].append(None)
+
     majors = []
+    count = 1
     # adding correct professor for each class
     for i in range(numClasses):
         loc += 1
         tc = lines[loc].split('\t')
-        requiredProfessor = int(tc[1])
+        requiredProfessor = mech.professor(int(tc[1]), count)
         majorContributedTo = tc[2]
-        
         if majorContributedTo not in majors:
             majors.append(majorContributedTo)
         if tc[2] in stem_majors:
             reqdomain = mech.domain("STEM",0)
         else:
             reqdomain = mech.domain("HUM",1)
-
         new_class = mech.Class(int(tc[0]), requiredProfessor, majorContributedTo, reqdomain, False,i+1)
-        classes.append(new_class)
+        if not(int(tc[0]) in classDict):
+            classDict.append(int(tc[0]))
+        classes[reqdomain.id][i+1] = new_class
     file.close() #close file
-    return numTimeSlots, rooms, classes, times, majors
+    return numTimeSlots, rooms, classes, numClasses, classDict, times, majors
 
 '''
     Generates an array of students
     PARAMS:
         studentsFilename -- string filename of studentPreferenceList file
+        majors -- list of valid majors
     RETURNS: 
         students -- an array of student tuplets where each student[i] = (year, major, [class preferences])
 '''   
@@ -229,7 +237,6 @@ def studentsArray(studentsFilename, majors):
 
         pref = line_pref.split(' ') #parse preferences
 
-
         if len(pref) == 0:
             break
         preferences_integers = [int(p) for p in pref if p != ""] #convert preferences to integers
@@ -238,16 +245,111 @@ def studentsArray(studentsFilename, majors):
     file.close()
     return students
 
+def accessibleSchedule(schedule, rooms, numTimes, access_classes, access_esems, whoPrefers, student_schedules, prof_schedules, notAddedDict):
+    access_rooms = []
+    for i in range(len(access_classes)):
+        access_classes[i] = ds.arrayToLinkedList(access_classes[i])
+        access_esems[i] = ds.arrayToLinkedList(access_esems[i])
+
+    for r in rooms:
+        if r.accessible == True:
+            access_rooms.append(r)
+
+    mergeSort(access_rooms, 1)
+
+    taken_time_room_combos = []
+
+    schedule = miniSchedule(schedule, access_esems, access_rooms, [0], 
+                                                student_schedules, prof_schedules, 
+                                                whoPrefers, taken_time_room_combos, notAddedDict)
+
+    schedule= miniSchedule(schedule, access_classes, access_rooms, range(numTimes)[1:], 
+                                                student_schedules, prof_schedules, 
+                                                whoPrefers, taken_time_room_combos, notAddedDict)
+
+    return taken_time_room_combos
+
+def miniSchedule(schedule, classes, maxRoomSize, timeSlots, studentSchedules, profSchedules, whoPrefers, taken_time_room_combos, notAddedDict):
+    holdClass = ds.LinkedList()
+    
+    for room in maxRoomSize:
+        for time in timeSlots:
+            if (time, room.id) in taken_time_room_combos:
+                continue
+            if classes[room.domain.id].isEmpty():
+                return schedule
+
+            clss = classes[room.domain.id].popFront()
+
+            skipTime = False
+            if clss.id == 0:
+                continue
+            infiniteLoopOption = False
+            while profSchedules[clss.professor.id].contains(time):
+                if classes[room.domain.id].isEmpty():
+                    infiniteLoopOption = True
+                holdClass.append(clss)
+
+                if infiniteLoopOption == True:
+                    classes[room.domain.id].head = None
+                    classes[room.domain.id].head = None
+
+                notAddedDict.update({clss.name : 'professor schedule conflict'})
+
+                if classes[room.domain.id].isEmpty():
+                    skipTime = True
+                    break
+            
+                clss = classes[room.domain.id].popFront()
+            if skipTime == True:
+                classes[room.domain.id] = holdClass
+                continue
+            
+            if clss.id in notAddedDict:
+                notAddedDict.pop(clss.id)
+
+            if not holdClass.isEmpty():
+                classes[room.domain.id].merge(holdClass)
+            
+            profSchedules[clss.professor.id].append(time)
+            # print(clss.id)
+            for student in whoPrefers[clss.id]:
+                x = student.id
+                # print(f"{x} - {studentSchedules[x]}")
+                if len(clss.enrolled) == room.capacity:
+                    break
+                if(not studentSchedules[x].contains(time)):
+                    clss.enrolled.append(x)
+                    studentSchedules[x].append(time)
+                    global globalStudentCount2
+                    globalStudentCount2 += 1
+
+            clss.room = room
+            clss.time = time
+
+            # print(f"{clss.room.name}\t Index: {clss.room.id}") # TODO: infinte loop? UGH
+            schedule[clss.room.id - 1][time] = clss
+            taken_time_room_combos.append((time, room.id))
+
+        for r in maxRoomSize[:room.id]:
+           conflictSchedule(schedule[r.id - 1], whoPrefers, studentSchedules, profSchedules)
+    return schedule
+    
 '''
     PARAMS:
         studentsFilename -- FILE OBJECT of studentprefs.txt
-        numClasses -- number of classes
+        classes -- list of classes with all of the class's information
+        majors -- list of majors
+        classArr -- list of classes (just their IDs) 
     RETURNS:
         mostPreferred -- LinkedList of classes organized in descending order by how preferred they are
         students -- array of arrays. Outer array is indexed by student id, inner arrays are student preference lists
         whoPrefers -- array of arrays of students who prefer a class, indexed by class
+        esems -- list of classes that are Esems
+        access_classes -- classes that are accessible
+        access_esems -- classes that are Esems and are accessible
 '''
-def classQ(studentsFilename, classes, numClasses, majors):
+def classQ(studentsFilename, classes, majors, classArr):
     studentPreferences = studentsArray(studentsFilename, majors)
 
     #array of LinkedLists of all students who prefer class, indexed by class
@@ -260,6 +362,7 @@ def classQ(studentsFilename, classes, numClasses, majors):
     access_esems = [] #esems that need to be accessible, indexed by domain
     access_classes = [] #classes that need to be accessible, indexed by domain
 
+    # print(numClasses)
     for d in range(len(classes)): #for number of domains
         esems.append([])
         esems[d].append(None) #0 class does not exist
@@ -267,55 +370,75 @@ def classQ(studentsFilename, classes, numClasses, majors):
         access_esems.append([]) #don't need to be indexed
         access_classes.append([]) #don't need to be indexed
 
-        for c in range(numClasses): #for each class
-            esems[d].append(None)
-
     tempClasses.append(None) #0 class does not exist
-    # print(len(classes))
-    # TODO: "Class" object is not iterable. also why is it 233 it should be 231
     for domain in classes:
         for clss in domain:
-            if not clss is None:
+            if clss is not None:
                 whoPrefers.append([])
                 tempClasses.append(None)
+                esems[0].append(None)
+                esems[1].append(None)
     for domain in classes:
         for clss in domain:
-            if not clss is None:
-                tempClasses[clss.name] = clss
+            if clss is not None:
+                tempClasses[clss.id] = clss # ? CHANGED FROM clss.name TO clss.id AND I HAVE NO IDEA HOW THIS WILL AFFECT THINGS!!!
 
     # for each class in each student preference list, increment that classes preference level
     i = -1
+    classDict = {}
+    count = 0
+
     whoPrefers.append([]) #0 prefer class 0 which doesn't exist --> I don't know what this does and I'm too scared to change it
+
+    classDictTest = {}
+    itt = 0
+    for (id, year, major, preferences, accomodations) in studentPreferences[1:]:
+        for pref in preferences:
+            if not(pref in classDictTest):
+                classDictTest.update({pref:itt})
+                class_id = itt
+                itt += 1
+            else: 
+                class_id = classDictTest.get(pref)
+
     for (id, year, major, preferences, accomodations) in studentPreferences[1:]:
         i += 1
         for pref in preferences:
-            whoPrefers[pref].append(mech.Student(id, year, major, pref, accomodations))
-            if accomodations == True and not tempClasses[pref] is None:
-                d = tempClasses[pref].domain.id
-                # tempClasses[pref].needsAccessibility = True
-                if tempClasses[pref].isEsem == True:
-                    access_esems[d].append(tempClasses[pref])
-                    esems[d][pref] = None
-                    classes[d][pref] = None
+            if pref in classArr:
+                if not (pref in classDict):
+                    classDict.update({pref:count})
+                    class_id = count
+                    count += 1
                 else:
-                    access_classes[d].append(tempClasses[pref])
-                    classes[d][pref] = None
-                    esems[d][pref] = None
-                tempClasses[pref] = None #no longer in tempClasses list -- in classes that need accessibility
+                    class_id = classDict.get(pref)
+                whoPrefers[class_id].append(mech.Student(id, year, major, pref, accomodations))
+                if accomodations == True and not tempClasses[class_id] is None:
+                    d = tempClasses[class_id].domain.id
+                    # tempClasses[pref].needsAccessibility = True
+                    if tempClasses[class_id].isEsem == True:
+                        access_esems[d].append(tempClasses[class_id])
+                        esems[d][class_id] = None 
+                        classes[d][class_id] = None
+                    else:
+                        # print(f"{d}\t{class_id}\t{len(esems[d])}")
+                        access_classes[d].append(tempClasses[class_id])
+                        classes[d][class_id] = None
+                        esems[d][class_id] = None
+                    tempClasses[class_id] = None #no longer in tempClasses list -- in classes that need accessibility
     count = 0
     for clss in tempClasses:
         count += 1
         if not clss is None:
             if clss.isEsem == True:
-                esems[clss.domain.id][clss.name] = clss
-                esems[clss.domain.id][clss.name].preferredStudents = len(whoPrefers[clss.name])
+                esems[clss.domain.id][clss.id] = clss
+                esems[clss.domain.id][clss.id].preferredStudents = len(whoPrefers[clss.id])
                 # esems[clss.domain.id][clss.name].needsAccessibility = clss.needsAccessibility
-
-                classes[clss.domain.id][clss.name] = None
-
+                classes[clss.domain.id][clss.id] = None
 
             else:
-                classes[clss.domain.id][clss.name].preferredStudents = len(whoPrefers[clss.name])
+                # print(clss.domain.id)
+                # print(clss.id)
+                classes[clss.domain.id][clss.id].preferredStudents = len(whoPrefers[clss.id]) # TODO: index out of range here
                 # classes[clss.domain.id][clss.name].needsAccessibility = clss.needsAccessibility
 
     #sort each whoPrefers[class] linked list in this order: majorSenior > majorJunior > nonMajorSenior > nonMajorJunior > Soph > Fresh
@@ -481,78 +604,45 @@ def classSchedule(constraints_filename, students_filename):
     '''
         numTimeSlots - integer, number of time slots
         rooms -- unsorted linked list of rooms and associated sizes (size, room#)
-        classTeachers -- array of classes indexed by professor who teaches them
+        class -- array of classes indexed by professor who teaches them
+        classArr -- list of classes (just their IDs)
         times -- list of timeslots
+        majors -- list of valid majors
     '''
-    numTimeSlots, maxRoomSize, classes, times, majors = parseConstraints(constraints_filename)
+    numTimeSlots, maxRoomSize, classes, numClasses, classArr, times, majors = parseConstraints(constraints_filename)
     # mergeSort(maxRoomSize, 0)
-
     # initialize preferred students and Class ranked lists
-    classRanks, studentPrefLists, whoPrefers = classQ(students_filename, classes, len(classes)-1, majors) # TODO: numClasses here??
+    studentPrefLists, whoPrefers, esems, access_classes, access_esems = classQ(students_filename, classes, majors, classArr) # if this still messes w/things, have it as numClasses instead
     globalStudentCount = 0
 
     # innit student's schedules
     studentSchedules = generateSchedules(len(studentPrefLists))
-    profSchedules = generateSchedules(int(len(classes) / 2))
+    profSchedules = generateSchedules(int(numClasses / 2))
 
-    holdClass = ds.LinkedList()
     schedule = []
 
-    for room in maxRoomSize:
+    for r in range(len(maxRoomSize)):
         schedule.append([])
+        for t in range(numTimeSlots):
+            schedule[r].append(None) 
 
-    for room in maxRoomSize:
-        for time in range(numTimeSlots): #TODO: how do this timeSlot stuff -- which assignment is most optimal?
-            if classRanks.isEmpty():
-                # df = pd.DataFrame(schedule)
-                # df.columns = [f'time {t}' for t in range(numTimeSlots)]
-                # df.index = [f'room {r[1]}' for r in maxRoomSize]
-                # print(studentPreferenceCount)
-                return schedule, globalStudentCount, globalStudentCount / ((len(studentPrefLists) - 1) * 4), (len(studentPrefLists) - 1)*4
-
-            clss = classRanks.popFront()
-
-            skipTime = False
-            while profSchedules[classes[clss.name]].contains(time):
-                #while profSchedules[classFacts[clss.name].professor].contains(time):
-                holdClass.append(clss)
-                #print(classRanks)
-
-                if classRanks.isEmpty():
-                    skipTime = True
-                    break
-
-                clss = classRanks.popFront()
-            
-
-            if skipTime == True:
-                classRanks = holdClass
-                continue
-
-            if not holdClass.isEmpty():
-                classRanks.merge(holdClass)
-
-            clss.professor = classes[clss.name]
-            
-            profSchedules[clss.professor].append(time)
-            for x in whoPrefers[clss.name]:
-                if len(clss.enrolled) == room[0]:
-                    break
-                if(not studentSchedules[x].contains(time)):
-                    clss.enrolled.append(x)
-                    studentSchedules[x].append(time) # TODO
-                    globalStudentCount+=1
-
-            clss.room = room
-            clss.time = time
-            schedule[clss.room[1] - 1].append(clss)
-            # print(f"Room: {room[1]} - Class {clss.name}, prof {clss.professor}, time {time}")
+    notAddedDict = {} #dictionary of reasons for why each unadded class went unadded
+    taken_time_room_combos = accessibleSchedule(schedule, maxRoomSize, numTimeSlots,
+                                                access_classes, access_esems, whoPrefers, 
+                                                studentSchedules, profSchedules, notAddedDict)
+    #schedule esems for 0 time slot
+    schedule = miniSchedule(schedule, esems, maxRoomSize, [0], 
+                                                studentSchedules, profSchedules, 
+                                                whoPrefers, taken_time_room_combos, notAddedDict)
+    #0 non-accomodations classes for all other time slots
+    schedule= miniSchedule(schedule, classes, maxRoomSize, range(numTimeSlots)[1:],
+                                                studentSchedules, profSchedules, 
+                                                whoPrefers, taken_time_room_combos, notAddedDict)
 
     conflictSchedule(schedule, whoPrefers, studentSchedules, profSchedules, globalStudentCount)
-    # df = pd.DataFrame(schedule)
-    # df.columns = [f'time{t}' for t in range(numTimeSlots)]
-    # df.index = [f'room {r[1]}' for r in maxRoomSize]
-    return schedule, globalStudentCount, globalStudentCount / ((len(studentPrefLists) - 1) * 4), (len(studentPrefLists) - 1)*4
+ 
+    # ? where the FUCK do the globalStudentCounts come from????
+    return schedule, globalStudentCount2, globalStudentCount2 / ((len(studentPrefLists) - 1) * 4), notAddedDict, (len(studentPrefLists) - 1)*4, studentSchedules
 
 def main():
     file = open("output.txt", "wb")
@@ -565,16 +655,19 @@ def main():
     else:
         sys.exit("Usage: RP_bmc.py <constriants.txt> <student_prefs.txt>")
         
-    start = datetime.datetime.now().microsecond / 1000.0
-    schedule, globalStudentCount, score, totalStudents = classSchedule(user_consts_file, user_prefs_file)
-    end = datetime.datetime.now().microsecond / 1000.0
-    print(f"Percent Assigned: {score}")
-    print(f"# of Assigned Students: {globalStudentCount}\t Total Possible Assignments: {totalStudents}")
-    print(f"Time (milli): {(end-start)}")
+    start = float(datetime.datetime.now().microsecond / 1000.0)
+    schedule, globalStudentCount, score, notAddedDict, totalStudents, ss = classSchedule(user_consts_file, user_prefs_file)
+    end = float(datetime.datetime.now().microsecond / 1000.0)
 
     for time in schedule:
         for clss in time:
-            file.write(bytes(f"{clss}\n", "UTF-8"))
+            if not clss is None:
+                file.write(bytes(f"{clss}\n", "UTF-8"))
+
+    print(f"Percent Assigned: {score}")
+    print(f"# of Assigned Students: {globalStudentCount}\t Total Possible Assignments: {totalStudents}")
+    print(f"Time (milli): {(end-start)}")
+    print(notAddedDict)
 
     file.close()
 main()

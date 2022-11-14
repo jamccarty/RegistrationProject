@@ -102,6 +102,13 @@ class Class:
             students += f"{s} "
         return f"{self.name}\t{self.room}\t{self.professor}\t{self.time}\t{students}"
 
+class professor:
+    def __init__(self, profName, id):
+        self.name = profName
+        self.id = id
+    def __str__(self):
+        return f"Professor Name: {self.name} ID: {self.id}"
+
 class classInfo:
     def __init__(self, requiredProfessor, majorContributedTo, domainCanBeTaughtIn):
         self.professor = requiredProfessor
@@ -211,8 +218,9 @@ class Time:
 
 
 class Room:
-    def __init__(self, id, capacity, domain, accessible):
+    def __init__(self, id, name, capacity, domain, accessible):
         self.id = id
+        self.name = name
         self.capacity = capacity
         self.domain = domain
         self.accessible = accessible
