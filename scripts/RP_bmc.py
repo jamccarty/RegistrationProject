@@ -271,11 +271,8 @@ def accessibleSchedule(schedule, rooms, timeSlots, access_classes, access_esems,
 
 def miniSchedule(schedule, classes, maxRoomSize, timeSlots, studentSchedules, profSchedules, whoPrefers, taken_time_room_combos, notAddedDict):
     holdClass = ds.LinkedList()
-    timeQ = ds.LinkedList()
-    # make time FIFOQ list - help
-    for time in timeSlots:
-        timeQ.append(time)
-    # print(f"time queue: {timeQ}")
+    timeQ = ds.arrayToLinkedList(timeSlots) # convert timeslots to a linked list
+
     for room in maxRoomSize:
         clss = classes[room.domain.id].popFront()
         time = timeQ.popFront()
