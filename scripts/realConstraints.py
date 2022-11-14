@@ -161,7 +161,6 @@ def parseConstraints(filename):
         # print(tc)
         new_class = mech.Class(int(tc[0]), requiredProfessor, majorContributedTo, reqdomain, False,i+1)
         # print(new_class.domain)
-        # TODO: fix the indexing here because holy shit
         classes[reqdomain.id][i+1] = new_class
     # print(loc)
     # print(len(classes))
@@ -176,7 +175,7 @@ print(f"Number of Time Slots: {numTimeSlots}")
 # for room in maxRoomSize:
 #     print(f"{room.id} \t {room.capacity}\t{room.domain}")
     # print(f"{room[1]}\t{room[0]}")
-# print(classes) # ? RN it's just printing the uh. the teacher
+print(classes) # ? RN it's just printing the uh. the teacher
 # for domain in classes:
 #     for clss in domain:
 #         if clss is not None:

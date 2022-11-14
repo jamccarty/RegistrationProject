@@ -130,23 +130,23 @@ def parseConstraints(filename):
         times.append(time_slot)
 
     # get number of rooms
-    count = 1 # this is the "ID"
     room = lines[1 + numTimeSlots].split('\t')
     numRooms = int(room[1]) #number of rooms total
     rooms = []
-    classes = []    
+    classes = []
+
+    count = 1 # this is the "ID"
 
     # initialize rooms array -- array of tuples (room size, room id)
     # (this is so that after merge sorting, each size remains paired with correct room id)
     for line in lines[2+numTimeSlots:2 + numTimeSlots + numRooms]:
         x = line.split('\t')
-        # get the domain of the room
+
         if x[0][:2] == "PK":
-            domain = mech.domain("STEM",0)
+            domain = mech.domain("STEM", 0)
         else:
             domain = mech.domain("HUM", 1)
-        
-        # get whether the classroom is accessible or not
+
         if x[0][:2] in accesible_buildings or x[0][:3] in accesible_buildings:
             accesibility = True
         else:
@@ -158,18 +158,19 @@ def parseConstraints(filename):
     # Get Number of Classes
     loc = 2 + numTimeSlots + numRooms 
     x = lines[loc].split('\t')
-    # print(x)
     numClasses = int(x[1])
+
+    # Get Number of Class Teachers
+    loc += 1
+    x = lines[loc].split('\t')
+
+    # initialize list of classes
     classes.append([])
     classes.append([])
     for i in range(2):
         classes[i].append(None)
         for c in range(numClasses):
-            classes[i].append(None) 
-
-    # Get Number of Class Teachers
-    loc += 1
-    x = lines[loc].split('\t')
+            classes[i].append(None)
 
     majors = []
     # adding correct professor for each class
@@ -178,16 +179,14 @@ def parseConstraints(filename):
         tc = lines[loc].split('\t')
         requiredProfessor = int(tc[1])
         majorContributedTo = tc[2]
-        
         if majorContributedTo not in majors:
             majors.append(majorContributedTo)
         if tc[2] in stem_majors:
             reqdomain = mech.domain("STEM",0)
         else:
             reqdomain = mech.domain("HUM",1)
-
         new_class = mech.Class(int(tc[0]), requiredProfessor, majorContributedTo, reqdomain, False,i+1)
-        classes.append(new_class)
+        classes[reqdomain.id][i+1] = new_class
     file.close() #close file
     return numTimeSlots, rooms, classes, times, majors
 
@@ -274,6 +273,7 @@ def classQ(studentsFilename, classes, numClasses, majors):
     # print(len(classes))
     # TODO: "Class" object is not iterable. also why is it 233 it should be 231
     for domain in classes:
+        # print(domain)
         for clss in domain:
             if not clss is None:
                 whoPrefers.append([])
