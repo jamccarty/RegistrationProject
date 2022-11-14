@@ -262,7 +262,7 @@ def accessibleSchedule(schedule, rooms, timeSlots, access_classes, access_esems,
     schedule = miniSchedule(schedule, access_esems, access_rooms, [0], 
                                                 student_schedules, prof_schedules, 
                                                 whoPrefers, taken_time_room_combos, notAddedDict)
-
+    # TODO: "int object is not scriptable"
     schedule= miniSchedule(schedule, access_classes, access_rooms, timeSlots[1:], 
                                                 student_schedules, prof_schedules, 
                                                 whoPrefers, taken_time_room_combos, notAddedDict)
@@ -278,27 +278,28 @@ def miniSchedule(schedule, classes, maxRoomSize, timeSlots, studentSchedules, pr
         clss = classes[room.domain.id].popFront()
         time = timeQ.popFront
         count = 0
-        for pt in profSchedules[clss.professor.id]:
-            if time.conflicts_with(pt): # idk how timeconflicst work man
-                time = timeQ.popFront()
-                count += 1
-                if count > len(timeQ):
-                    # a single "loop" of the "while profSchedules[clss.professor.id].contains(time)" thing
-                    if classes[room.domain.id].isEmpty():
-                        infiniteLoopOption = True
-                    holdClass.append(clss)
+        if clss is not None:
+            for pt in profSchedules[clss.professor.id]:
+                if time.conflicts_with(pt): # idk how timeconflicst work man
+                    time = timeQ.popFront()
+                    count += 1
+                    if count > len(timeQ):
+                        # a single "loop" of the "while profSchedules[clss.professor.id].contains(time)" thing
+                        if classes[room.domain.id].isEmpty():
+                            infiniteLoopOption = True
+                        holdClass.append(clss)
 
-                    if infiniteLoopOption == True:
-                        classes[room.domain.id].head = None
-                        classes[room.domain.id].head = None
+                        if infiniteLoopOption == True:
+                            classes[room.domain.id].head = None
+                            classes[room.domain.id].head = None
 
-                    notAddedDict.update({clss.name : 'professor schedule conflict'})
+                        notAddedDict.update({clss.name : 'professor schedule conflict'})
 
-                    if classes[room.domain.id].isEmpty():
-                        skipTime = True
-                        break
-                
-                    clss = classes[room.domain.id].popFront()
+                        if classes[room.domain.id].isEmpty():
+                            skipTime = True
+                            break
+                    
+                        clss = classes[room.domain.id].popFront()
         
         for time in timeSlots:
             if (time, room.id) in taken_time_room_combos:
