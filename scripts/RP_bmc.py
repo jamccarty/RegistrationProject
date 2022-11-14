@@ -6,6 +6,9 @@ import classroomMechanics as mech
 import sys
 import random
 
+# STEM ID == 0, HUM (humanities) ID == 1
+stem_majors = ["MATH","PSYC","BIOL","PHYS","CMSC","GEOL","ECON"]
+
 class Class:
 
     def __init__(self, class_name):
@@ -126,17 +129,21 @@ def parseConstraints(filename):
         times.append(time_slot)
 
     # get number of rooms
+    count = 1 # this is the "ID"
     room = lines[1 + numTimeSlots].split('\t')
     numRooms = int(room[1]) #number of rooms total
     rooms = []
-    classes = []
-    count = 1 # this is the "ID"
+    classes = []    
 
     # initialize rooms array -- array of tuples (room size, room id)
     # (this is so that after merge sorting, each size remains paired with correct room id)
     for line in lines[2+numTimeSlots:2 + numTimeSlots + numRooms]:
         x = line.split('\t')
-        new_room = mech.Room(x[0], count, int(x[1]), True)
+        if x[0][:2] == "PK":
+            domain = mech.domain("STEM",0)
+        else:
+            domain = mech.domain("HUM", 1)
+        new_room = mech.Room(x[0], int(x[1]), domain, True)
         rooms.append(new_room)
         count += 1
     
@@ -145,21 +152,30 @@ def parseConstraints(filename):
     x = lines[loc].split('\t')
     # print(x)
     numClasses = int(x[1])
+    classes.append([])
+    classes.append([])
+    for i in range(2):
+        classes[i].append(None)
+        for c in range(numClasses):
+            classes[i].append(None) 
 
     # Get Number of Class Teachers
     loc += 1
     x = lines[loc].split('\t')
-    classTeachers = [] # array of classes indexed by classID (first is 0)
-    classTeachers.append(0) #there is no 0 class
 
     # adding correct professor for each class
-    print(f"numClasses:{numClasses}")
     for i in range(numClasses):
         loc += 1
         tc = lines[loc].split('\t')
         requiredProfessor = int(tc[1])
         majorContributedTo = tc[2]
-        new_class = mech.Class(int(tc[0]), requiredProfessor, majorContributedTo, "TODO", False,i+1)
+        
+        if tc[2] in stem_majors:
+            reqdomain = mech.domain("STEM",0)
+        else:
+            reqdomain = mech.domain("HUM",1)
+
+        new_class = mech.Class(int(tc[0]), requiredProfessor, majorContributedTo, reqdomain, False,i+1)
         classes.append(new_class)
     file.close() #close file
     return numTimeSlots, rooms, classes, times

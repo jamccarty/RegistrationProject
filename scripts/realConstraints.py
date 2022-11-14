@@ -2,6 +2,8 @@ import re
 import DataStructures as ds
 import classroomMechanics as mech
 
+stem_majors = ["MATH","PSYC","BIOL","PHYS","CMSC","GEOL","ECON"]
+
 '''
     get_bmc_info.py constraints file format:
     Class       Times   # of Classes
@@ -96,16 +98,20 @@ def parseConstraints(filename):
     numRooms = int(room[1]) #number of rooms total
     rooms = []
     classes = []
+
     count = 1 # this is the "ID"
 
     # initialize rooms array -- array of tuples (room size, room id)
     # (this is so that after merge sorting, each size remains paired with correct room id)
     for line in lines[2+numTimeSlots:2 + numTimeSlots + numRooms]:
         x = line.split('\t')
-        # id = x[0]
-        # capacity = int(x[1])
-        # domain = mech.domain(x[2], dom_id)
-        new_room = mech.Room(x[0], count, int(x[1]), True)
+        # print(x)
+
+        if x[0][:2] == "PK":
+            domain = mech.domain("STEM", 0)
+        else:
+            domain = mech.domain("HUM", 1)
+        new_room = mech.Room(x[0], int(x[1]), domain, True)
         rooms.append(new_room)
         count += 1
     
@@ -118,12 +124,19 @@ def parseConstraints(filename):
     # Get Number of Class Teachers
     loc += 1
     x = lines[loc].split('\t')
-    classTeachers = [] # array of classes indexed by classID (first is 0)
-    classTeachers.append(0) #there is no 0 class
-    # print(loc) # should start at 123
+
+    # initialize list of classes
+    classes.append([])
+    classes.append([])
+    for i in range(2):
+        classes[i].append(None)
+        for c in range(numClasses):
+            classes[i].append(None)
+    print(classes)
+
     # adding correct professor for each class
     # print(numClasses)
-    print(f"numClasses:{numClasses}")
+    # print(f"numClasses:{numClasses}")
     for i in range(numClasses):
         loc += 1
         # print(i)
@@ -131,12 +144,18 @@ def parseConstraints(filename):
         # print(tc)
         requiredProfessor = int(tc[1])
         majorContributedTo = tc[2]
+
+        if tc[2] in stem_majors:
+            reqdomain = mech.domain("STEM",0)
+        else:
+            reqdomain = mech.domain("HUM",1)
         # print(tc)
-        new_class = mech.Class(int(tc[0]), requiredProfessor, majorContributedTo, "TODO", False,i+1)
-        # print(new_class)
-        classes.append(new_class)
-    print(loc)
-    print(len(classes))
+        new_class = mech.Class(int(tc[0]), requiredProfessor, majorContributedTo, reqdomain, False,i+1)
+        # print(new_class.domain)
+        # TODO: fix the indexing here because holy shit
+        classes[reqdomain.id][i+1] = new_class
+    # print(loc)
+    # print(len(classes))
     file.close() #close file
     return numTimeSlots, rooms, classes, times
 
@@ -146,12 +165,14 @@ numTimeSlots, maxRoomSize, classes, timeSlots = parseConstraints(constraints_fil
 print(f"Number of Time Slots: {numTimeSlots}")
 # print(maxRoomSize.str)
 # for room in maxRoomSize:
-#     print(f"{room.name} \t {room.capacity}")
-#     # print(f"{room[1]}\t{room[0]}")
+#     print(f"{room.id} \t {room.capacity}\t{room.domain}")
+    # print(f"{room[1]}\t{room[0]}")
 # print(classes) # ? RN it's just printing the uh. the teacher
-for clss in classes:
-    print(f"{clss.name}\t{clss.professor}\t{clss.major}")
-print(len(classes))
+for domain in classes:
+    for clss in domain:
+        if clss is not None:
+            print(f"{clss.name}\t{clss.professor}\t{clss.major}\t{clss.domain}")
+# print(len(classes))
 # print(timeSlots)
 # for time in timeSlots:
 #     print(f"{time.start_time}\t{time.end_time}\t{time.days_of_week}")
