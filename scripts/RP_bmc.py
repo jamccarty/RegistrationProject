@@ -177,11 +177,12 @@ def parseConstraints(filename):
             classes[i].append(None)
 
     majors = []
+    count = 1
     # adding correct professor for each class
     for i in range(numClasses):
         loc += 1
         tc = lines[loc].split('\t')
-        requiredProfessor = int(tc[1])
+        requiredProfessor = mech.professor(int(tc[1]), count)
         majorContributedTo = tc[2]
         if majorContributedTo not in majors:
             majors.append(majorContributedTo)
@@ -280,10 +281,10 @@ def miniSchedule(schedule, classes, maxRoomSize, timeSlots, studentSchedules, pr
             clss = classes[room.domain.id].popFront()
 
             skipTime = False
-            if clss.name == 0:
+            if clss.id == 0:
                 continue
             infiniteLoopOption = False
-            while profSchedules[clss.professor].contains(time):
+            while profSchedules[clss.professor.id].contains(time): # TODO: class is too large. Professor ID? (ugh)
                 if classes[room.domain.id].isEmpty():
                     infiniteLoopOption = True
                 holdClass.append(clss)
@@ -303,14 +304,15 @@ def miniSchedule(schedule, classes, maxRoomSize, timeSlots, studentSchedules, pr
                 classes[room.domain.id] = holdClass
                 continue
             
-            if clss.name in notAddedDict:
-                notAddedDict.pop(clss.name)
+            if clss.id in notAddedDict:
+                notAddedDict.pop(clss.id)
 
             if not holdClass.isEmpty():
                 classes[room.domain.id].merge(holdClass)
             
-            profSchedules[clss.professor].append(time)
-            for student in whoPrefers[clss.name]:
+            profSchedules[clss.professor.id].append(time)
+            print(clss.id)
+            for student in whoPrefers[clss.id]:
                 x = student.id
                 # print(f"{x} - {studentSchedules[x]}")
                 if len(clss.enrolled) == room.capacity:
