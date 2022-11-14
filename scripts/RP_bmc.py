@@ -276,11 +276,11 @@ def miniSchedule(schedule, classes, maxRoomSize, timeSlots, studentSchedules, pr
 
     for room in maxRoomSize:
         clss = classes[room.domain.id].popFront()
-        time = timeQ.popfront # <- ???
+        time = timeQ.popFront
         count = 0
         for pt in profSchedules[clss.professor.id]:
             if time.conflicts_with(pt): # idk how timeconflicst work man
-                time = timeQ.popfront()
+                time = timeQ.popFront()
                 count += 1
                 if count > len(timeQ):
                     # a single "loop" of the "while profSchedules[clss.professor.id].contains(time)" thing
