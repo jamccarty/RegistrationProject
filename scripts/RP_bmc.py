@@ -278,28 +278,26 @@ def miniSchedule(schedule, classes, maxRoomSize, timeSlots, studentSchedules, pr
         clss = classes[room.domain.id].popFront()
         time = timeQ.popFront
         count = 0
-        if clss is not None:
-            for pt in profSchedules[clss.professor.id]:
-                if time.conflicts_with(pt): # idk how timeconflicst work man
-                    time = timeQ.popFront()
-                    count += 1
-                    if count > len(timeQ):
-                        # a single "loop" of the "while profSchedules[clss.professor.id].contains(time)" thing
-                        if classes[room.domain.id].isEmpty():
-                            infiniteLoopOption = True
-                        holdClass.append(clss)
+        if time.schedule_conflict(profSchedules[clss.professor.id]): # idk how timeconflicst work man
+            time = timeQ.popFront()
+            count += 1
+            if count > len(timeQ):
+                # a single "loop" of the "while profSchedules[clss.professor.id].contains(time)" thing
+                if classes[room.domain.id].isEmpty():
+                    infiniteLoopOption = True
+                holdClass.append(clss)
 
-                        if infiniteLoopOption == True:
-                            classes[room.domain.id].head = None
-                            classes[room.domain.id].head = None
+                if infiniteLoopOption == True:
+                    classes[room.domain.id].head = None
+                    classes[room.domain.id].head = None
 
-                        notAddedDict.update({clss.name : 'professor schedule conflict'})
+                notAddedDict.update({clss.name : 'professor schedule conflict'})
 
-                        if classes[room.domain.id].isEmpty():
-                            skipTime = True
-                            break
-                    
-                        clss = classes[room.domain.id].popFront()
+                if classes[room.domain.id].isEmpty():
+                    skipTime = True
+                    break
+                
+                clss = classes[room.domain.id].popFront()
         
         for time in timeSlots:
             if (time, room.id) in taken_time_room_combos:

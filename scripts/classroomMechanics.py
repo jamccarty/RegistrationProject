@@ -1,4 +1,5 @@
 import re
+import DataStructures as ds
 
 class Student:
     def __init__(self, id, year, major, preferredClassMajor, accomodations):
@@ -135,6 +136,19 @@ class TimeSlot:
 
     def __str__(self):
         return f"{self.id}: {self.start_time} - {self.end_time}"
+
+    def schedule_conflict(self, LL):
+        loc = LL.head
+
+        if loc is None:
+            return False
+        
+        while not loc is None:
+            if(self.conflicts_with(loc.data)):
+                return True
+            loc = loc.next
+
+        return False
 
     def conflicts_with(self, other):
         #       --self--
