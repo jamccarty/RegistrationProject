@@ -576,9 +576,9 @@ if len(sys.argv) >= 2:
     user_consts_file = sys.argv[1]
     user_prefs_file = sys.argv[2]
 
-start = float(datetime.datetime.now().microsecond) / 1000
+start = time.time() * 1000 #float(datetime.datetime.now().microsecond) / 1000
 schedule, globalStudentCount, score, notAddedDict, totalStudents = classSchedule(user_consts_file, user_prefs_file)
-end = float(datetime.datetime.now().microsecond) / 1000
+end = time.time() * 1000 #float(datetime.datetime.now().microsecond) / 1000
 #schedule, globalStudentCount, score, notAddedDict = classSchedule("testE/constraints_0", "testE/prefs_0")
 
 file = open("mod_output.txt", "wb")

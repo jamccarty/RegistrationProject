@@ -2,6 +2,7 @@ import pandas as pd
 import datetime
 import DataStructures as ds
 import sys
+import time
 import classroomMechanics as mech
 
 class Class:
@@ -403,9 +404,9 @@ if len(sys.argv) >= 2:
     user_consts_file = sys.argv[1]
     user_prefs_file = sys.argv[2]
     
-start = float(datetime.datetime.now().microsecond / 1000.0)
+start = time.time() * 1000 #float(datetime.datetime.now().microsecond / 1000.0)
 schedule, globalStudentCount, score, totalStudents = classSchedule(user_consts_file, user_prefs_file)
-end = float(datetime.datetime.now().microsecond / 1000.0)
+end = time.time() * 1000 #float(datetime.datetime.now().microsecond / 1000.0)
 print(f"Percent Assigned: {score}")
 print(f"# of Assigned Students: {globalStudentCount}\t Total Possible Assignments: {totalStudents}")
 print(f"Time (milli): {(end-start)}")
