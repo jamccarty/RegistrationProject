@@ -156,7 +156,7 @@ def parseConstraints(filename):
             accesibility = True
         else:
             accesibility = False
-        new_room = mech.Room(count, x[0], int(x[1]), domain, accesibility)
+        new_room = mech.Room(count, int(x[1]), domain, accesibility, name=x[0])
         rooms.append(new_room)
         count += 1
     
