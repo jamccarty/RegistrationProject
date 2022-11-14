@@ -218,8 +218,9 @@ class Time:
 
 
 class Room:
-    def __init__(self, id, capacity, domain, accessible):
+    def __init__(self, id, name, capacity, domain, accessible):
         self.id = id
+        self.name = name
         self.capacity = capacity
         self.domain = domain
         self.accessible = accessible
