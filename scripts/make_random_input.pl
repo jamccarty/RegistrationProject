@@ -30,8 +30,8 @@ if ($numclasses < 20) {
 	print "The number of classes must be 20 or higher so that at least one esem is added.\n";
 	exit 1;
 }
-if ($nummajors > $numclasses){
-	print "The number of majors must be less than or equal to the number of courses.\n";
+if ($nummajors > $numclasses * .25){
+	print "There can be no more than 1 major for every 4 courses.\n";
 	exit 1;
 }
 
