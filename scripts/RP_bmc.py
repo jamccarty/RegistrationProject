@@ -114,8 +114,16 @@ def parseConstraints(filename):
             days_ls.append("TH")
             days_ls.append("F")
         else:
-            for i in days:
-                days_ls.append(i)
+            for i in range(len(days)):
+                if days[i] == 'T' and i < len(days) - 1:
+                    if days[i+1] == 'H':
+                        days_ls.append('TH')
+                    else:
+                        days_ls.append('T')
+                elif days[i] == 'H':
+                    continue
+                else:
+                    days_ls.append(i)
 
         # get the start time
         start_time = [] 
@@ -259,11 +267,11 @@ def accessibleSchedule(schedule, rooms, timeSlots, access_classes, access_esems,
 
     taken_time_room_combos = []
 
-    schedule = miniSchedule(schedule, access_esems, access_rooms, [0], 
+    schedule = miniSchedule(schedule, access_esems, access_rooms, [timeSlots[1]], 
                                                 student_schedules, prof_schedules, 
                                                 whoPrefers, taken_time_room_combos, notAddedDict)
     # TODO: "int object is not scriptable"
-    schedule= miniSchedule(schedule, access_classes, access_rooms, timeSlots[1:], 
+    schedule= miniSchedule(schedule, access_classes, access_rooms, timeSlots[2:], 
                                                 student_schedules, prof_schedules, 
                                                 whoPrefers, taken_time_room_combos, notAddedDict)
 
@@ -271,74 +279,63 @@ def accessibleSchedule(schedule, rooms, timeSlots, access_classes, access_esems,
 
 def miniSchedule(schedule, classes, maxRoomSize, timeSlots, studentSchedules, profSchedules, whoPrefers, taken_time_room_combos, notAddedDict):
     holdClass = ds.LinkedList()
-    timeQ = ds.LinkedList()
-    # make time FIFOQ list - help
-    for time in timeSlots:
-        timeQ.append(time)
+
     # print(f"time queue: {timeQ}")
     for room in maxRoomSize:
-        clss = classes[room.domain.id].popFront()
-        time = timeQ.popFront()
-        count = 0
-        if time.schedule_conflict(profSchedules[clss.professor.id]): # idk how timeconflicst work man
+        timeQ = ds.arrayToLinkedList(timeSlots)
+        while not timeQ.isEmpty():
+            clss = classes[room.domain.id].popFront()
+            if clss is None:
+                break
             time = timeQ.popFront()
-            count += 1
-            if count > len(timeQ):
-                # a single "loop" of the "while profSchedules[clss.professor.id].contains(time)" thing
-                if classes[room.domain.id].isEmpty():
-                    infiniteLoopOption = True
-                holdClass.append(clss)
 
-                if infiniteLoopOption == True:
-                    classes[room.domain.id].head = None
-                    classes[room.domain.id].head = None
-
-                notAddedDict.update({clss.name : 'professor schedule conflict'})
-
-                if classes[room.domain.id].isEmpty():
-                    skipTime = True
-                    break
-                
-                clss = classes[room.domain.id].popFront()
-        
-        for time in timeSlots: # popping front therefore things going wrong??
             if (time, room.id) in taken_time_room_combos:
                 continue
-            if classes[room.domain.id].isEmpty():
-                return schedule
 
-            clss = classes[room.domain.id].popFront()
-
+            count = 0
+            infiniteLoopOption = False #this is for breaking out of infinite professor conflict loop
             skipTime = False
-            if clss.id == 0:
-                continue
-            infiniteLoopOption = False
-            while profSchedules[clss.professor.id].contains(time):
-                if classes[room.domain.id].isEmpty():
-                    infiniteLoopOption = True
-                holdClass.append(clss)
+            while time.schedule_conflict(profSchedules[clss.professor.id]): #if current time conflicts with ANY time in professor's schedule
+                if (time, room.id) in taken_time_room_combos:
+                    time = timeQ.popFront()
+                    continue
+                
+                timeQ.append(time) #add time back to end -- it's unused, can use again for this room
+                time = timeQ.popFront() #get new time
 
-                if infiniteLoopOption == True:
-                    classes[room.domain.id].head = None
-                    classes[room.domain.id].head = None
+                count += 1 #increment count of number times gone by
+                if count >= timeQ.size: #if have gone through all times
+                    # a single "loop" of the "while profSchedules[clss.professor.id].contains(time)" thing
+                    if classes[room.domain.id].isEmpty():
+                        infiniteLoopOption = True
+                    holdClass.append(clss)
+                    
+                    #DO NOT REMOVE
+                    #this is because there was a weird bug where classes would be empty 
+                    #and then after holdClass.append(clss), classes would contain clss again
+                    #I still don't know why this happened, but it was rare, and I couldn't reproduce it, so here it is -Jac
+                    if infiniteLoopOption == True:
+                        classes[room.domain.id].head = None
+                        classes[room.domain.id].tail = None
 
-                notAddedDict.update({clss.name : 'professor schedule conflict'})
+                    notAddedDict.update({clss.name : 'professor schedule conflict'})
 
-                if classes[room.domain.id].isEmpty():
-                    skipTime = True
-                    break
-            
-                clss = classes[room.domain.id].popFront()
-            if skipTime == True:
-                classes[room.domain.id] = holdClass
-                continue
-            
+                    if classes[room.domain.id].isEmpty():
+                        skipTime = True
+                        break
+                    
+                    clss = classes[room.domain.id].popFront()
+   
+                if skipTime == True:
+                    classes[room.domain.id] = holdClass
+                    continue
+                
             if clss.id in notAddedDict:
                 notAddedDict.pop(clss.id)
 
             if not holdClass.isEmpty():
                 classes[room.domain.id].merge(holdClass)
-            
+                
             profSchedules[clss.professor.id].append(time)
             # print(clss.id)
             for student in whoPrefers[clss.id]:
@@ -356,11 +353,11 @@ def miniSchedule(schedule, classes, maxRoomSize, timeSlots, studentSchedules, pr
             clss.time = time
 
             # print(f"{clss.room.name}\t Index: {clss.room.id}")
-            schedule[clss.room.id - 1][time] = clss
+            schedule[clss.room.id - 1][time.id] = clss
             taken_time_room_combos.append((time, room.id))
 
         for r in maxRoomSize[:room.id]:
-           conflictSchedule(schedule[r.id - 1], whoPrefers, studentSchedules, profSchedules)
+            conflictSchedule(schedule[r.id - 1], whoPrefers, studentSchedules, profSchedules)
     return schedule
     
 '''
@@ -581,6 +578,7 @@ def conflictSchedule(room_schedule, whoPrefers, studentSchedules, profSchedules)
 
         if currClass is None:
             continue
+
         room = currClass.room
 
         for t2 in range(len(room_schedule[:time]))[1:]: #no esems
@@ -693,24 +691,22 @@ def classSchedule(constraints_filename, students_filename):
 
     notAddedDict = {} #dictionary of reasons for why each unadded class went unadded
     # TODO: these needs to be converted to the times array - how? I don't know man
-    taken_time_room_combos = accessibleSchedule(schedule, maxRoomSize, numTimeSlots,
+    taken_time_room_combos = accessibleSchedule(schedule, maxRoomSize, times,
                                                 access_classes, access_esems, whoPrefers, 
                                                 studentSchedules, profSchedules, notAddedDict)
     #schedule esems for 0 time slot
-    schedule = miniSchedule(schedule, esems, maxRoomSize, [0], 
+    schedule = miniSchedule(schedule, esems, maxRoomSize, [times[1]], 
                                                 studentSchedules, profSchedules, 
                                                 whoPrefers, taken_time_room_combos, notAddedDict)
     #0 non-accomodations classes for all other time slots
-    schedule= miniSchedule(schedule, classes, maxRoomSize, times[1:],
+    schedule= miniSchedule(schedule, classes, maxRoomSize, times[2:],
                                                 studentSchedules, profSchedules, 
                                                 whoPrefers, taken_time_room_combos, notAddedDict)
-
-    conflictSchedule(schedule, whoPrefers, studentSchedules, profSchedules, globalStudentCount)
  
     return schedule, globalStudentCount2, globalStudentCount2 / ((len(studentPrefLists) - 1) * 4), notAddedDict, (len(studentPrefLists) - 1)*4, studentSchedules
 
 def main():
-    file = open("output.txt", "wb")
+    file = open("bmc_output.txt", "wb")
     file.write(bytes("Course\tRoom\tTeacher\tTime\tStudents\n", "UTF-8"))
     user_consts_file = ""
     user_prefs_file =  ""
