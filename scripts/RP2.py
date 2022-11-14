@@ -1,5 +1,6 @@
 import pandas as pd
 import datetime
+import time
 import re
 import DataStructures as ds
 import classroomMechanics as mech
@@ -381,22 +382,35 @@ def miniSchedule(schedule, classes, maxRoomSize, timeSlots, studentSchedules, pr
                     classes[room.domain.id].prepend(clss)
                     continue
             infiniteLoopOption = False
+            infiniteLoopCount = 0
+            sizeOfClassesList = classes[room.domain.id].size
             while profSchedules[clss.professor].contains(time):
+
                 if classes[room.domain.id].isEmpty():
                     infiniteLoopOption = True
                 holdClass.append(clss)
 
                 if infiniteLoopOption == True:
                     classes[room.domain.id].head = None
-                    classes[room.domain.id].head = None
+                    classes[room.domain.id].tail = None
 
                 notAddedDict.update({clss.name : 'professor schedule conflict'})
 
                 if classes[room.domain.id].isEmpty():
                     skipTime = True
                     break
-            
+
+                if infiniteLoopCount > sizeOfClassesList:
+                    holdClass.tail.next = classes[room.domain.id].head
+                    holdClass.tail = classes[room.domain.id].tail
+                    classes[room.domain.id].head = None
+                    classes[room.domain.id].tail = None
+                    skipTime = True
+                    break
+
                 clss = classes[room.domain.id].popFront()
+                infiniteLoopCount += 1
+
             if skipTime == True:
                 classes[room.domain.id] = holdClass
                 continue
@@ -562,9 +576,9 @@ if len(sys.argv) >= 2:
     user_consts_file = sys.argv[1]
     user_prefs_file = sys.argv[2]
 
-start = float(datetime.datetime.now().microsecond / 1000.0)
+start = float(datetime.datetime.now().microsecond) / 1000
 schedule, globalStudentCount, score, notAddedDict, totalStudents = classSchedule(user_consts_file, user_prefs_file)
-end = float(datetime.datetime.now().microsecond / 1000.0)
+end = float(datetime.datetime.now().microsecond) / 1000
 #schedule, globalStudentCount, score, notAddedDict = classSchedule("testE/constraints_0", "testE/prefs_0")
 
 file = open("mod_output.txt", "wb")
