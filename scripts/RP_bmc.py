@@ -8,6 +8,7 @@ import random
 
 # STEM ID == 0, HUM (humanities) ID == 1
 stem_majors = ["MATH","PSYC","BIOL","PHYS","CMSC","GEOL","ECON"]
+accesible_buildings = ["CAN", "CARP","DAL","GO","PK",]
 
 class Class:
 
@@ -139,11 +140,18 @@ def parseConstraints(filename):
     # (this is so that after merge sorting, each size remains paired with correct room id)
     for line in lines[2+numTimeSlots:2 + numTimeSlots + numRooms]:
         x = line.split('\t')
+        # get the domain of the room
         if x[0][:2] == "PK":
             domain = mech.domain("STEM",0)
         else:
             domain = mech.domain("HUM", 1)
-        new_room = mech.Room(x[0], int(x[1]), domain, True)
+        
+        # get whether the classroom is accessible or not
+        if x[0][:2] in accesible_buildings or x[0][:3] in accesible_buildings:
+            accesibility = True
+        else:
+            accesibility = False
+        new_room = mech.Room(x[0], int(x[1]), domain, accesibility)
         rooms.append(new_room)
         count += 1
     
@@ -163,6 +171,7 @@ def parseConstraints(filename):
     loc += 1
     x = lines[loc].split('\t')
 
+    majors = []
     # adding correct professor for each class
     for i in range(numClasses):
         loc += 1
@@ -170,6 +179,8 @@ def parseConstraints(filename):
         requiredProfessor = int(tc[1])
         majorContributedTo = tc[2]
         
+        if majorContributedTo not in majors:
+            majors.append(majorContributedTo)
         if tc[2] in stem_majors:
             reqdomain = mech.domain("STEM",0)
         else:
@@ -178,7 +189,7 @@ def parseConstraints(filename):
         new_class = mech.Class(int(tc[0]), requiredProfessor, majorContributedTo, reqdomain, False,i+1)
         classes.append(new_class)
     file.close() #close file
-    return numTimeSlots, rooms, classes, times
+    return numTimeSlots, rooms, classes, times, majors
 
 '''
     Generates an array of students
@@ -187,7 +198,7 @@ def parseConstraints(filename):
     RETURNS: 
         students -- an array of student tuplets where each student[i] = (year, major, [class preferences])
 '''   
-def studentsArray(studentsFilename):
+def studentsArray(studentsFilename, majors):
     file = open(studentsFilename)
 
     string = file.read()
@@ -204,15 +215,18 @@ def studentsArray(studentsFilename):
         if line == "":
             break
         
-        # TODO: maybe change the random year/major and all no accomodations later
-        # at the very least change random major to match that of the given major classes but
-        # I (Audrey) don't know how to do that so for the time being WE ARE NOT
         line = re.sub('[\t]+', '\t', line)
         parts = line.split('\t') #parts now holds ['id', 'pref1 pref2 pref3 pref4 year major accomodations]
         line_pref = parts[1] #isolate student preferences
-        year = random.randrange(1,5) #int(parts[2]) -- since there are no assigned major atm we're randomly generating them
-        major = random.randrange(0,11) # int(parts[3]) # ????? HHHHHH??? WHY IS THIS BLUE 
-        accomodations = True # if int(parts[4]) == 1 else False -- again, randomly assigned later. 
+        year = random.randrange(1,5) # randomly assign a class year 
+        major = majors[random.randrange(0,len(majors))] # randomly assign a major
+        # randomly assign if needs accesibility or not -- theoritically this *should* be 1% accesible students but y'know. probability! 
+        accessible = random.randrange(0,100)
+        if accessible == 0:
+            accomodations = True
+        else: 
+            accomodations = False 
+
         pref = line_pref.split(' ') #parse preferences
 
 
@@ -233,8 +247,8 @@ def studentsArray(studentsFilename):
         students -- array of arrays. Outer array is indexed by student id, inner arrays are student preference lists
         whoPrefers -- array of arrays of students who prefer a class, indexed by class
 '''
-def classQ(studentsFilename, classes, numClasses):
-    studentPreferences = studentsArray(studentsFilename)
+def classQ(studentsFilename, classes, numClasses, majors):
+    studentPreferences = studentsArray(studentsFilename, majors)
 
     #array of LinkedLists of all students who prefer class, indexed by class
     whoPrefers = []
@@ -257,7 +271,8 @@ def classQ(studentsFilename, classes, numClasses):
             esems[d].append(None)
 
     tempClasses.append(None) #0 class does not exist
-    # TODO: what the fuck is "classes" supposed to even look like??
+    # print(len(classes))
+    # TODO: "Class" object is not iterable. also why is it 233 it should be 231
     for domain in classes:
         for clss in domain:
             if not clss is None:
@@ -469,11 +484,11 @@ def classSchedule(constraints_filename, students_filename):
         classTeachers -- array of classes indexed by professor who teaches them
         times -- list of timeslots
     '''
-    numTimeSlots, maxRoomSize, classes, times = parseConstraints(constraints_filename)
+    numTimeSlots, maxRoomSize, classes, times, majors = parseConstraints(constraints_filename)
     # mergeSort(maxRoomSize, 0)
 
     # initialize preferred students and Class ranked lists
-    classRanks, studentPrefLists, whoPrefers = classQ(students_filename, classes, len(classes)-1) # TODO: numClasses here??
+    classRanks, studentPrefLists, whoPrefers = classQ(students_filename, classes, len(classes)-1, majors) # TODO: numClasses here??
     globalStudentCount = 0
 
     # innit student's schedules
@@ -498,7 +513,7 @@ def classSchedule(constraints_filename, students_filename):
             clss = classRanks.popFront()
 
             skipTime = False
-            while profSchedules[classTeachers[clss.name]].contains(time):
+            while profSchedules[classes[clss.name]].contains(time):
                 #while profSchedules[classFacts[clss.name].professor].contains(time):
                 holdClass.append(clss)
                 #print(classRanks)
@@ -517,7 +532,7 @@ def classSchedule(constraints_filename, students_filename):
             if not holdClass.isEmpty():
                 classRanks.merge(holdClass)
 
-            clss.professor = classTeachers[clss.name]
+            clss.professor = classes[clss.name]
             
             profSchedules[clss.professor].append(time)
             for x in whoPrefers[clss.name]:

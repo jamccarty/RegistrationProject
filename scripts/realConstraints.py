@@ -3,6 +3,7 @@ import DataStructures as ds
 import classroomMechanics as mech
 
 stem_majors = ["MATH","PSYC","BIOL","PHYS","CMSC","GEOL","ECON"]
+accesible_buildings = ["CAN", "CARP","DAL","GO","PK",]
 
 '''
     get_bmc_info.py constraints file format:
@@ -105,13 +106,19 @@ def parseConstraints(filename):
     # (this is so that after merge sorting, each size remains paired with correct room id)
     for line in lines[2+numTimeSlots:2 + numTimeSlots + numRooms]:
         x = line.split('\t')
-        # print(x)
+        print(x)
 
         if x[0][:2] == "PK":
             domain = mech.domain("STEM", 0)
         else:
             domain = mech.domain("HUM", 1)
-        new_room = mech.Room(x[0], int(x[1]), domain, True)
+
+        if x[0][:2] in accesible_buildings or x[0][:3] in accesible_buildings:
+            accesibility = True
+        else:
+            accesibility = False
+        new_room = mech.Room(x[0], int(x[1]), domain, accesibility)
+        print(new_room.accessible)
         rooms.append(new_room)
         count += 1
     
@@ -132,8 +139,9 @@ def parseConstraints(filename):
         classes[i].append(None)
         for c in range(numClasses):
             classes[i].append(None)
-    print(classes)
+    # print(classes)
 
+    majors = []
     # adding correct professor for each class
     # print(numClasses)
     # print(f"numClasses:{numClasses}")
@@ -144,7 +152,8 @@ def parseConstraints(filename):
         # print(tc)
         requiredProfessor = int(tc[1])
         majorContributedTo = tc[2]
-
+        if majorContributedTo not in majors:
+            majors.append(majorContributedTo)
         if tc[2] in stem_majors:
             reqdomain = mech.domain("STEM",0)
         else:
@@ -157,10 +166,10 @@ def parseConstraints(filename):
     # print(loc)
     # print(len(classes))
     file.close() #close file
-    return numTimeSlots, rooms, classes, times
+    return numTimeSlots, rooms, classes, times, majors
 
 constraints_filename = "f2_constraints.txt"
-numTimeSlots, maxRoomSize, classes, timeSlots = parseConstraints(constraints_filename)
+numTimeSlots, maxRoomSize, classes, timeSlots, majors = parseConstraints(constraints_filename)
 
 print(f"Number of Time Slots: {numTimeSlots}")
 # print(maxRoomSize.str)
@@ -168,11 +177,12 @@ print(f"Number of Time Slots: {numTimeSlots}")
 #     print(f"{room.id} \t {room.capacity}\t{room.domain}")
     # print(f"{room[1]}\t{room[0]}")
 # print(classes) # ? RN it's just printing the uh. the teacher
-for domain in classes:
-    for clss in domain:
-        if clss is not None:
-            print(f"{clss.name}\t{clss.professor}\t{clss.major}\t{clss.domain}")
+# for domain in classes:
+#     for clss in domain:
+#         if clss is not None:
+#             print(f"{clss.name}\t{clss.professor}\t{clss.major}\t{clss.domain}")
 # print(len(classes))
 # print(timeSlots)
 # for time in timeSlots:
 #     print(f"{time.start_time}\t{time.end_time}\t{time.days_of_week}")
+print(majors)
