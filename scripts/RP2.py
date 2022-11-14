@@ -161,7 +161,7 @@ def accessibleSchedule(schedule, rooms, numTimes, access_classes, access_esems, 
 
     schedule = miniSchedule(schedule, access_esems, access_rooms, [0], 
                                                 student_schedules, prof_schedules, 
-                                                whoPrefers, taken_time_room_combos, notAddedDict)
+                                                whoPrefers, taken_time_room_combos, notAddedDict, backwardsRooms=True)
 
     # for domain in range(len(access_esems)):
     #     for c in access_esems[domain]:
@@ -191,7 +191,7 @@ def accessibleSchedule(schedule, rooms, numTimes, access_classes, access_esems, 
 
     schedule= miniSchedule(schedule, access_classes, access_rooms, range(numTimes)[1:], 
                                                 student_schedules, prof_schedules, 
-                                                whoPrefers, taken_time_room_combos, notAddedDict)
+                                                whoPrefers, taken_time_room_combos, notAddedDict, backwardsRooms=True)
 
     return taken_time_room_combos
 
@@ -359,7 +359,7 @@ def mergeSort(arr, dir):
             k += 1
  
 
-def miniSchedule(schedule, classes, maxRoomSize, timeSlots, studentSchedules, profSchedules, whoPrefers, taken_time_room_combos, notAddedDict):
+def miniSchedule(schedule, classes, maxRoomSize, timeSlots, studentSchedules, profSchedules, whoPrefers, taken_time_room_combos, notAddedDict, backwardsRooms = False):
     holdClass = ds.LinkedList()
     room_count = 0
     
@@ -368,13 +368,18 @@ def miniSchedule(schedule, classes, maxRoomSize, timeSlots, studentSchedules, pr
             if (time, room.id) in taken_time_room_combos:
                 continue
             if classes[room.domain.id].isEmpty():
-                return schedule
+                continue
 
             clss = classes[room.domain.id].popFront()
 
             skipTime = False
             if clss.name == 0:
                 continue
+
+            if backwardsRooms:
+                if clss.preferredStudents > room.capacity and classes.size <= len(maxRoomSize):
+                    classes[room.domain.id].prepend(clss)
+                    continue
             infiniteLoopOption = False
             while profSchedules[clss.professor].contains(time):
                 if classes[room.domain.id].isEmpty():
