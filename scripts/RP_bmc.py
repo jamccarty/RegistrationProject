@@ -9,6 +9,7 @@ import random
 # STEM ID == 0, HUM (humanities) ID == 1
 stem_majors = ["MATH","PSYC","BIOL","PHYS","CMSC","GEOL","ECON"]
 accesible_buildings = ["CAN", "CARP","DAL","GO","PK",]
+globalStudentCount2 = 0
 
 class Class:
 
@@ -155,7 +156,7 @@ def parseConstraints(filename):
             accesibility = True
         else:
             accesibility = False
-        new_room = mech.Room(x[0], int(x[1]), domain, accesibility)
+        new_room = mech.Room(count, x[0], int(x[1]), domain, accesibility)
         rooms.append(new_room)
         count += 1
     
@@ -284,7 +285,7 @@ def miniSchedule(schedule, classes, maxRoomSize, timeSlots, studentSchedules, pr
             if clss.id == 0:
                 continue
             infiniteLoopOption = False
-            while profSchedules[clss.professor.id].contains(time): # TODO: class is too large. Professor ID? (ugh)
+            while profSchedules[clss.professor.id].contains(time):
                 if classes[room.domain.id].isEmpty():
                     infiniteLoopOption = True
                 holdClass.append(clss)
@@ -311,7 +312,7 @@ def miniSchedule(schedule, classes, maxRoomSize, timeSlots, studentSchedules, pr
                 classes[room.domain.id].merge(holdClass)
             
             profSchedules[clss.professor.id].append(time)
-            print(clss.id)
+            # print(clss.id)
             for student in whoPrefers[clss.id]:
                 x = student.id
                 # print(f"{x} - {studentSchedules[x]}")
@@ -319,7 +320,6 @@ def miniSchedule(schedule, classes, maxRoomSize, timeSlots, studentSchedules, pr
                     break
                 if(not studentSchedules[x].contains(time)):
                     clss.enrolled.append(x)
-                    
                     studentSchedules[x].append(time)
                     global globalStudentCount2
                     globalStudentCount2 += 1
@@ -327,6 +327,7 @@ def miniSchedule(schedule, classes, maxRoomSize, timeSlots, studentSchedules, pr
             clss.room = room
             clss.time = time
 
+            # print(f"{clss.room.name}\t Index: {clss.room.id}") # TODO: infinte loop? UGH
             schedule[clss.room.id - 1][time] = clss
             taken_time_room_combos.append((time, room.id))
 
