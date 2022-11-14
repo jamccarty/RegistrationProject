@@ -245,7 +245,7 @@ def studentsArray(studentsFilename, majors):
     file.close()
     return students
 
-def accessibleSchedule(schedule, rooms, numTimes, access_classes, access_esems, whoPrefers, student_schedules, prof_schedules, notAddedDict):
+def accessibleSchedule(schedule, rooms, timeSlots, access_classes, access_esems, whoPrefers, student_schedules, prof_schedules, notAddedDict):
     access_rooms = []
     for i in range(len(access_classes)):
         access_classes[i] = ds.arrayToLinkedList(access_classes[i])
@@ -263,7 +263,7 @@ def accessibleSchedule(schedule, rooms, numTimes, access_classes, access_esems, 
                                                 student_schedules, prof_schedules, 
                                                 whoPrefers, taken_time_room_combos, notAddedDict)
 
-    schedule= miniSchedule(schedule, access_classes, access_rooms, range(numTimes)[1:], 
+    schedule= miniSchedule(schedule, access_classes, access_rooms, timeSlots[1:], 
                                                 student_schedules, prof_schedules, 
                                                 whoPrefers, taken_time_room_combos, notAddedDict)
 
@@ -273,6 +273,7 @@ def miniSchedule(schedule, classes, maxRoomSize, timeSlots, studentSchedules, pr
     holdClass = ds.LinkedList()
     
     for room in maxRoomSize:
+        # TODO: implement timeSlot stuff for the overlapping slots - how to know which timeslots is the best one to take?
         for time in timeSlots:
             if (time, room.id) in taken_time_room_combos:
                 continue
@@ -327,7 +328,7 @@ def miniSchedule(schedule, classes, maxRoomSize, timeSlots, studentSchedules, pr
             clss.room = room
             clss.time = time
 
-            # print(f"{clss.room.name}\t Index: {clss.room.id}") # TODO: infinte loop? UGH
+            # print(f"{clss.room.name}\t Index: {clss.room.id}")
             schedule[clss.room.id - 1][time] = clss
             taken_time_room_combos.append((time, room.id))
 
@@ -627,6 +628,7 @@ def classSchedule(constraints_filename, students_filename):
             schedule[r].append(None) 
 
     notAddedDict = {} #dictionary of reasons for why each unadded class went unadded
+    # TODO: these needs to be converted to the times array - how? I don't know man
     taken_time_room_combos = accessibleSchedule(schedule, maxRoomSize, numTimeSlots,
                                                 access_classes, access_esems, whoPrefers, 
                                                 studentSchedules, profSchedules, notAddedDict)
@@ -635,13 +637,12 @@ def classSchedule(constraints_filename, students_filename):
                                                 studentSchedules, profSchedules, 
                                                 whoPrefers, taken_time_room_combos, notAddedDict)
     #0 non-accomodations classes for all other time slots
-    schedule= miniSchedule(schedule, classes, maxRoomSize, range(numTimeSlots)[1:],
+    schedule= miniSchedule(schedule, classes, maxRoomSize, times[1:],
                                                 studentSchedules, profSchedules, 
                                                 whoPrefers, taken_time_room_combos, notAddedDict)
 
     conflictSchedule(schedule, whoPrefers, studentSchedules, profSchedules, globalStudentCount)
  
-    # ? where the FUCK do the globalStudentCounts come from????
     return schedule, globalStudentCount2, globalStudentCount2 / ((len(studentPrefLists) - 1) * 4), notAddedDict, (len(studentPrefLists) - 1)*4, studentSchedules
 
 def main():
