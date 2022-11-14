@@ -67,13 +67,14 @@ class Class:
                 domain - the comain that class falls under
                 isEsem - if the class is an Esem
                 id - a numerical ID for that class
+        classDict -- list of all class IDs
         times -- array of TimeSlot() objects:
             Each TimeSlot() object in times holds the following pieces of information:
                 id - the id of the time
                 start_time  - the start time, float
                 end_time - the end time, float
                 days_of_week - the days of the week it occurs on, array of strings
-
+        majors -- list of valid majors
     # TODO: add Esems
 '''
 def parseConstraints(filename):
@@ -199,6 +200,7 @@ def parseConstraints(filename):
     Generates an array of students
     PARAMS:
         studentsFilename -- string filename of studentPreferenceList file
+        majors -- list of valid majors
     RETURNS: 
         students -- an array of student tuplets where each student[i] = (year, major, [class preferences])
 '''   
@@ -241,19 +243,110 @@ def studentsArray(studentsFilename, majors):
     file.close()
     return students
 
+def accessibleSchedule(schedule, rooms, numTimes, access_classes, access_esems, whoPrefers, student_schedules, prof_schedules, notAddedDict):
+    access_rooms = []
+    for i in range(len(access_classes)):
+        access_classes[i] = ds.arrayToLinkedList(access_classes[i])
+        access_esems[i] = ds.arrayToLinkedList(access_esems[i])
+
+    for r in rooms:
+        if r.accessible == True:
+            access_rooms.append(r)
+
+    mergeSort(access_rooms, 1)
+
+    taken_time_room_combos = []
+
+    schedule = miniSchedule(schedule, access_esems, access_rooms, [0], 
+                                                student_schedules, prof_schedules, 
+                                                whoPrefers, taken_time_room_combos, notAddedDict)
+
+    schedule= miniSchedule(schedule, access_classes, access_rooms, range(numTimes)[1:], 
+                                                student_schedules, prof_schedules, 
+                                                whoPrefers, taken_time_room_combos, notAddedDict)
+
+    return taken_time_room_combos
+
+def miniSchedule(schedule, classes, maxRoomSize, timeSlots, studentSchedules, profSchedules, whoPrefers, taken_time_room_combos, notAddedDict):
+    holdClass = ds.LinkedList()
+    
+    for room in maxRoomSize:
+        for time in timeSlots:
+            if (time, room.id) in taken_time_room_combos:
+                continue
+            if classes[room.domain.id].isEmpty():
+                return schedule
+
+            clss = classes[room.domain.id].popFront()
+
+            skipTime = False
+            if clss.name == 0:
+                continue
+            infiniteLoopOption = False
+            while profSchedules[clss.professor].contains(time):
+                if classes[room.domain.id].isEmpty():
+                    infiniteLoopOption = True
+                holdClass.append(clss)
+
+                if infiniteLoopOption == True:
+                    classes[room.domain.id].head = None
+                    classes[room.domain.id].head = None
+
+                notAddedDict.update({clss.name : 'professor schedule conflict'})
+
+                if classes[room.domain.id].isEmpty():
+                    skipTime = True
+                    break
+            
+                clss = classes[room.domain.id].popFront()
+            if skipTime == True:
+                classes[room.domain.id] = holdClass
+                continue
+            
+            if clss.name in notAddedDict:
+                notAddedDict.pop(clss.name)
+
+            if not holdClass.isEmpty():
+                classes[room.domain.id].merge(holdClass)
+            
+            profSchedules[clss.professor].append(time)
+            for student in whoPrefers[clss.name]:
+                x = student.id
+                # print(f"{x} - {studentSchedules[x]}")
+                if len(clss.enrolled) == room.capacity:
+                    break
+                if(not studentSchedules[x].contains(time)):
+                    clss.enrolled.append(x)
+                    
+                    studentSchedules[x].append(time)
+                    global globalStudentCount2
+                    globalStudentCount2 += 1
+
+            clss.room = room
+            clss.time = time
+
+            schedule[clss.room.id - 1][time] = clss
+            taken_time_room_combos.append((time, room.id))
+
+        for r in maxRoomSize[:room.id]:
+           conflictSchedule(schedule[r.id - 1], whoPrefers, studentSchedules, profSchedules)
+    return schedule
+    
 '''
     PARAMS:
         studentsFilename -- FILE OBJECT of studentprefs.txt
-        classes -- 
-        numClasses -- number of classes
+        classes -- list of classes with all of the class's information
         majors -- list of majors
-        classArr -- list of classes 
+        classArr -- list of classes (just their IDs) 
     RETURNS:
         mostPreferred -- LinkedList of classes organized in descending order by how preferred they are
         students -- array of arrays. Outer array is indexed by student id, inner arrays are student preference lists
         whoPrefers -- array of arrays of students who prefer a class, indexed by class
+        esems -- list of classes that are Esems
+        access_classes -- classes that are accessible
+        access_esems -- classes that are Esems and are accessible
 '''
-def classQ(studentsFilename, classes, numClasses, majors, classArr):
+def classQ(studentsFilename, classes, majors, classArr):
     studentPreferences = studentsArray(studentsFilename, majors)
 
     #array of LinkedLists of all students who prefer class, indexed by class
@@ -273,9 +366,6 @@ def classQ(studentsFilename, classes, numClasses, majors, classArr):
 
         access_esems.append([]) #don't need to be indexed
         access_classes.append([]) #don't need to be indexed
-
-        # for c in range(numClasses): #for each class
-        #     esems[d].append(None)
 
     tempClasses.append(None) #0 class does not exist
     for domain in classes:
@@ -511,78 +601,45 @@ def classSchedule(constraints_filename, students_filename):
     '''
         numTimeSlots - integer, number of time slots
         rooms -- unsorted linked list of rooms and associated sizes (size, room#)
-        classTeachers -- array of classes indexed by professor who teaches them
+        class -- array of classes indexed by professor who teaches them
+        classArr -- list of classes (just their IDs)
         times -- list of timeslots
+        majors -- list of valid majors
     '''
     numTimeSlots, maxRoomSize, classes, numClasses, classArr, times, majors = parseConstraints(constraints_filename)
     # mergeSort(maxRoomSize, 0)
     # initialize preferred students and Class ranked lists
-    studentPrefLists, whoPrefers, esems, access_classes, access_esems = classQ(students_filename, classes, len(classes)-1, majors, classArr) # if this still messes w/things, have it as numClasses instead
+    studentPrefLists, whoPrefers, esems, access_classes, access_esems = classQ(students_filename, classes, majors, classArr) # if this still messes w/things, have it as numClasses instead
     globalStudentCount = 0
 
-    # TODO: copy rest of RP2.py I think?
     # innit student's schedules
     studentSchedules = generateSchedules(len(studentPrefLists))
-    profSchedules = generateSchedules(int(len(classes) / 2))
+    profSchedules = generateSchedules(int(numClasses / 2))
 
-    holdClass = ds.LinkedList()
     schedule = []
 
-    for room in maxRoomSize:
+    for r in range(len(maxRoomSize)):
         schedule.append([])
+        for t in range(numTimeSlots):
+            schedule[r].append(None) 
 
-    for room in maxRoomSize:
-        for time in range(numTimeSlots): #TODO: how do this timeSlot stuff -- which assignment is most optimal?
-            if classRanks.isEmpty():
-                # df = pd.DataFrame(schedule)
-                # df.columns = [f'time {t}' for t in range(numTimeSlots)]
-                # df.index = [f'room {r[1]}' for r in maxRoomSize]
-                # print(studentPreferenceCount)
-                return schedule, globalStudentCount, globalStudentCount / ((len(studentPrefLists) - 1) * 4), (len(studentPrefLists) - 1)*4
-
-            clss = classRanks.popFront()
-
-            skipTime = False
-            while profSchedules[classes[clss.name]].contains(time):
-                #while profSchedules[classFacts[clss.name].professor].contains(time):
-                holdClass.append(clss)
-                #print(classRanks)
-
-                if classRanks.isEmpty():
-                    skipTime = True
-                    break
-
-                clss = classRanks.popFront()
-            
-
-            if skipTime == True:
-                classRanks = holdClass
-                continue
-
-            if not holdClass.isEmpty():
-                classRanks.merge(holdClass)
-
-            clss.professor = classes[clss.name]
-            
-            profSchedules[clss.professor].append(time)
-            for x in whoPrefers[clss.name]:
-                if len(clss.enrolled) == room[0]:
-                    break
-                if(not studentSchedules[x].contains(time)):
-                    clss.enrolled.append(x)
-                    studentSchedules[x].append(time) # TODO
-                    globalStudentCount+=1
-
-            clss.room = room
-            clss.time = time
-            schedule[clss.room[1] - 1].append(clss)
-            # print(f"Room: {room[1]} - Class {clss.name}, prof {clss.professor}, time {time}")
+    notAddedDict = {} #dictionary of reasons for why each unadded class went unadded
+    taken_time_room_combos = accessibleSchedule(schedule, maxRoomSize, numTimeSlots,
+                                                access_classes, access_esems, whoPrefers, 
+                                                studentSchedules, profSchedules, notAddedDict)
+    #schedule esems for 0 time slot
+    schedule = miniSchedule(schedule, esems, maxRoomSize, [0], 
+                                                studentSchedules, profSchedules, 
+                                                whoPrefers, taken_time_room_combos, notAddedDict)
+    #0 non-accomodations classes for all other time slots
+    schedule= miniSchedule(schedule, classes, maxRoomSize, range(numTimeSlots)[1:],
+                                                studentSchedules, profSchedules, 
+                                                whoPrefers, taken_time_room_combos, notAddedDict)
 
     conflictSchedule(schedule, whoPrefers, studentSchedules, profSchedules, globalStudentCount)
-    # df = pd.DataFrame(schedule)
-    # df.columns = [f'time{t}' for t in range(numTimeSlots)]
-    # df.index = [f'room {r[1]}' for r in maxRoomSize]
-    return schedule, globalStudentCount, globalStudentCount / ((len(studentPrefLists) - 1) * 4), (len(studentPrefLists) - 1)*4
+ 
+    # ? where the FUCK do the globalStudentCounts come from????
+    return schedule, globalStudentCount2, globalStudentCount2 / ((len(studentPrefLists) - 1) * 4), notAddedDict, (len(studentPrefLists) - 1)*4, studentSchedules
 
 def main():
     file = open("output.txt", "wb")
@@ -595,16 +652,19 @@ def main():
     else:
         sys.exit("Usage: RP_bmc.py <constriants.txt> <student_prefs.txt>")
         
-    start = datetime.datetime.now().microsecond / 1000.0
-    schedule, globalStudentCount, score, totalStudents = classSchedule(user_consts_file, user_prefs_file)
-    end = datetime.datetime.now().microsecond / 1000.0
-    print(f"Percent Assigned: {score}")
-    print(f"# of Assigned Students: {globalStudentCount}\t Total Possible Assignments: {totalStudents}")
-    print(f"Time (milli): {(end-start)}")
+    start = float(datetime.datetime.now().microsecond / 1000.0)
+    schedule, globalStudentCount, score, notAddedDict, totalStudents, ss = classSchedule(user_consts_file, user_prefs_file)
+    end = float(datetime.datetime.now().microsecond / 1000.0)
 
     for time in schedule:
         for clss in time:
-            file.write(bytes(f"{clss}\n", "UTF-8"))
+            if not clss is None:
+                file.write(bytes(f"{clss}\n", "UTF-8"))
+
+    print(f"Percent Assigned: {score}")
+    print(f"# of Assigned Students: {globalStudentCount}\t Total Possible Assignments: {totalStudents}")
+    print(f"Time (milli): {(end-start)}")
+    print(notAddedDict)
 
     file.close()
 main()
