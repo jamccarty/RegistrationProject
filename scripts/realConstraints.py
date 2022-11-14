@@ -118,7 +118,7 @@ def parseConstraints(filename):
             accesibility = True
         else:
             accesibility = False
-        new_room = mech.Room(x[0], int(x[1]), domain, accesibility)
+        new_room = mech.Room(count, x[0], int(x[1]), domain, accesibility)
         # print(new_room.accessible)
         rooms.append(new_room)
         count += 1
@@ -204,7 +204,7 @@ for clss in classLog:
 # print(numClass)
 # print(len(classDict))
 # print(len(classes))
-# print(timeSlots)
+print(timeSlots)
 # for time in timeSlots:
 #     print(f"{time.start_time}\t{time.end_time}\t{time.days_of_week}")
 # print(majors)

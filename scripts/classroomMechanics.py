@@ -109,15 +109,6 @@ class professor:
     def __str__(self):
         return f"Professor Name: {self.name} ID: {self.id}"
 
-class classInfo:
-    def __init__(self, requiredProfessor, majorContributedTo, domainCanBeTaughtIn):
-        self.professor = requiredProfessor
-        self.major = majorContributedTo
-        self.domain = domainCanBeTaughtIn
-
-    def __str__(self):
-        return f"prof: {self.professor} major: {self.major} domain {self.domain}"
-
 class domain:
     def __init__(self, name, id):
         self.name = name
@@ -224,11 +215,6 @@ class Room:
         self.capacity = capacity
         self.domain = domain
         self.accessible = accessible
-
-    #def __init__(self, name, id, capacity):
-        #self.id = id
-        #self.capacity = capacity
-        #self.name = name
 
     def __gt__(self, other):
         return self.capacity > other.capacity
