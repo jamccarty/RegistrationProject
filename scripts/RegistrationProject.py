@@ -156,6 +156,7 @@ def classQ(studentsFilename, numClasses):
     # mergeSort the classes based on preference level
 
     # print(mostPreferredClasses)
+    mostPreferredClasses = ds.removeBlanks(mostPreferredClasses)
     mergeSort(mostPreferredClasses, 0)
     # print(mostPreferredClasses)
 
