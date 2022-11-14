@@ -281,20 +281,14 @@ def classQ(studentsFilename, classes, numClasses):
     for i in range(len(classes)):
         classes[i] = ds.removeBlanks(classes[i])
         mergeSort(classes[i], 0)
-        # print(f"classes[{i}]: ",end="")
-        # mech.printClassArray(classes[i])
         classes[i] = ds.arrayToLinkedList(classes[i])
 
         esems[i] = ds.removeBlanks(esems[i])
         mergeSort(esems[i], 0)
-        # print(f"esems[{i}]: ",end="")
-        # mech.printClassArray(esems[i])
         esems[i] = ds.arrayToLinkedList(esems[i])
 
         mergeSort(access_esems[i], 1)
         mergeSort(access_classes[i], 1)
-        # print(f"access_classes[{i}]: ",end="")
-        # mech.printClassArray(access_classes[i])
 
     return studentPreferences, whoPrefers, esems, access_classes, access_esems
 
@@ -367,6 +361,7 @@ def mergeSort(arr, dir):
 
 def miniSchedule(schedule, classes, maxRoomSize, timeSlots, studentSchedules, profSchedules, whoPrefers, taken_time_room_combos, notAddedDict):
     holdClass = ds.LinkedList()
+    room_count = 0
     
     for room in maxRoomSize:
         for time in timeSlots:
@@ -400,7 +395,7 @@ def miniSchedule(schedule, classes, maxRoomSize, timeSlots, studentSchedules, pr
             if skipTime == True:
                 classes[room.domain.id] = holdClass
                 continue
-            
+
             if clss.name in notAddedDict:
                 notAddedDict.pop(clss.name)
 
@@ -410,7 +405,6 @@ def miniSchedule(schedule, classes, maxRoomSize, timeSlots, studentSchedules, pr
             profSchedules[clss.professor].append(time)
             for student in whoPrefers[clss.name]:
                 x = student.id
-                # print(f"{x} - {studentSchedules[x]}")
                 if len(clss.enrolled) == room.capacity:
                     break
                 if(not studentSchedules[x].contains(time)):
@@ -419,20 +413,20 @@ def miniSchedule(schedule, classes, maxRoomSize, timeSlots, studentSchedules, pr
                     studentSchedules[x].append(time)
                     global globalStudentCount2
                     globalStudentCount2 += 1
-
-                    # print(f"miniSchedule: {x} {studentSchedules[x]} for class {clss.name} at time {time}")
                     
             clss.room = room
             clss.time = time
             schedule[clss.room.id - 1][time] = clss
             taken_time_room_combos.append((time, room.id))
-            # print(clss.name)
-        for r in maxRoomSize[:room.id]:
-           conflictSchedule(schedule[r.id - 1], whoPrefers, studentSchedules, profSchedules)
+
+        room_count += 1
+        for r in maxRoomSize[:room_count]:
+            conflictSchedule(schedule[r.id - 1], whoPrefers, studentSchedules, profSchedules)
+
     return schedule
 
 def conflictSchedule(room_schedule, whoPrefers, studentSchedules, profSchedules):
-    for time in range(len(room_schedule[1:])): #non esems
+    for time in range(len(room_schedule))[1:]: #non esems
         currClass = room_schedule[time]
         orgStu = []
         maxSwpStu = ([], [])
@@ -441,39 +435,40 @@ def conflictSchedule(room_schedule, whoPrefers, studentSchedules, profSchedules)
 
         if currClass is None:
             continue
-
         room = currClass.room
 
-        for t2 in range(len(room_schedule[1:time])): #no esems
+        for t2 in range(len(room_schedule[:time]))[1:]: #no esems
             swapClass = room_schedule[t2] #class currClass would be swapping spots with
             swpStu = [] #students that would be enrolled in the swapClass at time t2
             if swapClass is None: #if t2 has a class scheduled
                 continue #TODO we should still probably check to see if swapping currClass to this time would increase the number of enrolled students
-            if profSchedules[swapClass.professor].contains(time):
+            if profSchedules[swapClass.professor].contains(time) or profSchedules[currClass.professor].contains(t2):
                 continue
-
             #tally number of students who would be enrolled in swapClass if swapClass was scheduled at time
             for student in whoPrefers[swapClass.name]:
                 x = student.id
                 if not studentSchedules[x].contains(time):
-                    swpStu.append(x)
+                    if swapClass.enrolled.count(x) > 0:
+                        swpStu.append(x)
+                    elif not studentSchedules[x].contains(t2):
+                        swpStu.append(x)
+
                 if len(swpStu) == room.capacity:
                     break
+
             #tallying number of students who would be enrolled in currClass if currClass was scheduled at t2
             for student in whoPrefers[currClass.name]:
                 x = student.id
                 if not studentSchedules[x].contains(t2):
-                    orgStu.append(x)
+                    if currClass.enrolled.count(x) > 0:
+                        orgStu.append(x)
+                    elif not studentSchedules[x].contains(time):
+                        orgStu.append(x)
+                
                 if len(orgStu) == room.capacity:
                     break
             
             #if the number of total students enrolled would be greater if swapClass and currClass swapped times,
-            #set maxSwpLen = swpLen
-            # if len(currClass.enrolled) + len(swapClass.enrolled) < len(swpStu) + len(orgStu):
-            #     for student in whoPrefers[currClass.name]:
-            #         x = student.id
-            #         if not studentSchedules[x].contains(t2):
-            #             orgStu.append(x)
             swpLen = len(orgStu) + len(swpStu)
             orgLen = len(currClass.enrolled) + len(swapClass.enrolled)
             if swpLen > orgLen: #TODO we should also probably have some sort of maxOrgLen and maxOrgStu array as well, since we've already calculated them
@@ -484,25 +479,33 @@ def conflictSchedule(room_schedule, whoPrefers, studentSchedules, profSchedules)
             orgStu = []
             swpStu = []
         if maxSwpIndex != -1:
-            #print(f"org enrollment: {len(room_schedule[time].enrolled)} + {len(room_schedule[maxSwpIndex].enrolled)} -> {len(maxSwpStu[0])} + {len(maxSwpStu[1])}")
             global globalStudentCount2
             globalStudentCount2 -= len(room_schedule[time].enrolled)
             globalStudentCount2 -= len(room_schedule[maxSwpIndex].enrolled)
 
+            #set new enrollments when classes swap times
             room_schedule[time].enrolled = maxSwpStu[0]
             room_schedule[maxSwpIndex].enrolled = maxSwpStu[1]
 
+            #edit professors' schedules to hold new times, get rid of old times
+            profSchedules[room_schedule[time].professor].remove(time)
+            profSchedules[room_schedule[time].professor].append(maxSwpIndex)
 
+            profSchedules[room_schedule[maxSwpIndex].professor].remove(maxSwpIndex)
+            profSchedules[room_schedule[maxSwpIndex].professor].append(time)
+
+            #edit enrolled students' schedules to reflect new times
             for student in room_schedule[time].enrolled:
                 studentSchedules[student].remove(time)
                 studentSchedules[student].append(maxSwpIndex)
             for student in room_schedule[maxSwpIndex].enrolled:
                 studentSchedules[student].remove(maxSwpIndex)
                 studentSchedules[student].append(time)
-
-            room_schedule[time], room_schedule[maxSwpIndex] = room_schedule[maxSwpIndex], room_schedule[time]
+                
             globalStudentCount2 += len(room_schedule[time].enrolled) + len(room_schedule[maxSwpIndex].enrolled)
-
+            room_schedule[time], room_schedule[maxSwpIndex] = room_schedule[maxSwpIndex], room_schedule[time]
+            room_schedule[time].time = time
+            room_schedule[maxSwpIndex].time = maxSwpIndex
 
 def classSchedule(constraints_filename, students_filename):
     #numTimeSlots - integer, number of time slots
@@ -542,7 +545,7 @@ def classSchedule(constraints_filename, students_filename):
     schedule= miniSchedule(schedule, classes, maxRoomSize, range(numTimeSlots)[1:],
                                                 studentSchedules, profSchedules, 
                                                 whoPrefers, taken_time_room_combos, notAddedDict)
-
+    # print(f"sched 1000: {studentSchedules[1000]}")
     return schedule, globalStudentCount2, globalStudentCount2 / ((len(studentPrefLists) - 1) * 4), notAddedDict, (len(studentPrefLists) - 1)*4
 
 #numTimeSlots, maxRoomSize, classes, domains = parseConstraints("scripts/esemtinyc.txt")
