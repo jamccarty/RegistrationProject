@@ -106,7 +106,7 @@ def parseConstraints(filename):
         x = line.split('\t')
         building = re.sub('[0-9]', '', x[0])
 
-        if building in stem_majors:
+        if building == "PK":
             domain = mech.domain("STEM", 0)
         else:
             domain = mech.domain("HUM", 1)
@@ -222,10 +222,16 @@ def accessibleSchedule(schedule, rooms, numTimes, access_classes, access_esems, 
     for i in range(len(access_classes)):
         access_classes[i] = ds.arrayToLinkedList(access_classes[i])
         access_esems[i] = ds.arrayToLinkedList(access_esems[i])
-
+    num0 = 0
+    num1 = 0
     for r in rooms:
+        if r.domain.id == 0:
+            num0+=1
+        elif r.domain.id == 1:
+            num1+=1
         if r.accessible == True:
             access_rooms.append(r)
+    print(f"rooms in domain 0: {num0} rooms in domain 1 {num1}")
 
     mergeSort(access_rooms, 1)
 
@@ -242,6 +248,7 @@ def accessibleSchedule(schedule, rooms, numTimes, access_classes, access_esems, 
     return taken_time_room_combos
 
 def miniSchedule(schedule, classes, maxRoomSize, timeSlots, studentSchedules, profSchedules, whoPrefers, taken_time_room_combos, notAddedDict, backwardsRooms = True):
+    print(f"domain 0: {classes[0].size}, domain 1: {classes[1].size}")
     holdClass = ds.LinkedList()
     room_count = 0
     for room in maxRoomSize:
@@ -690,6 +697,6 @@ for time in schedule:
 print(f"Percent Assigned: {score}")
 print(f"# of Assigned Students: {globalStudentCount}\t Total Possible Assignments: {totalStudents}")
 print(f"Time (milli): {(end-start)}")
-# print(notAddedDict)
+print(notAddedDict)
 
 file.close()
