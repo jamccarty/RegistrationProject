@@ -103,16 +103,18 @@ def parseConstraints(filename):
     # (this is so that after merge sorting, each size remains paired with correct room id)
     for line in lines[2+numTimeSlots:2 + numTimeSlots + numRooms]:
         x = line.split('\t')
+        building = re.sub('[0-9]', '', x[0])
 
-        if x[0][:2] == "PK":
+        if building in stem_majors:
             domain = mech.domain("STEM", 0)
         else:
             domain = mech.domain("HUM", 1)
 
-        if x[0][:2] in accesible_buildings or x[0][:3] in accesible_buildings:
+        if building in accesible_buildings:
             accesibility = True
         else:
             accesibility = False
+
         new_room = mech.Room(count, int(x[1]), domain, accesibility, name=x[0])
         rooms.append(new_room)
         count += 1
@@ -127,8 +129,8 @@ def parseConstraints(filename):
     x = lines[loc].split('\t')
 
     # initialize list of classes
-    classes.append([])
-    classes.append([])
+    classes.append([]) #domain 0
+    classes.append([]) #domain 1
     for i in range(2):
         classes[i].append(None)
         for c in range(numClasses):
@@ -148,12 +150,16 @@ def parseConstraints(filename):
             reqdomain = mech.domain("STEM",0)
         else:
             reqdomain = mech.domain("HUM",1)
-        new_class = mech.Class(int(tc[0]), requiredProfessor, majorContributedTo, reqdomain, False,i+1)
+        isEsem = (majorContributedTo == 'EMLY')
+        if isEsem == True:
+            majorContributedTo = -1 #only for freshmen
+        new_class = mech.Class(int(tc[0]), requiredProfessor, majorContributedTo, reqdomain, isEsem,i+1)
         if not(int(tc[0]) in classDict):
             classDict.append(int(tc[0]))
         classes[reqdomain.id][i+1] = new_class
+        count += 1
     file.close() #close file
-    return numTimeSlots, rooms, classes, numClasses, classDict, majors
+    return numTimeSlots, rooms, classes, numClasses, classDict, majors, count
 
 '''
     Generates an array of students
@@ -216,10 +222,12 @@ def accessibleSchedule(schedule, rooms, numTimes, access_classes, access_esems, 
 
     taken_time_room_combos = []
 
+    print("access_esems")
     schedule = miniSchedule(schedule, access_esems, access_rooms, [0], 
                                                 student_schedules, prof_schedules, 
                                                 whoPrefers, taken_time_room_combos, notAddedDict)
-
+    mech.printRoomArray(access_rooms)
+    print("access_classes")
     schedule= miniSchedule(schedule, access_classes, access_rooms, range(numTimes)[1:], 
                                                 student_schedules, prof_schedules, 
                                                 whoPrefers, taken_time_room_combos, notAddedDict, backwardsRooms = True)
@@ -229,7 +237,6 @@ def accessibleSchedule(schedule, rooms, numTimes, access_classes, access_esems, 
 def miniSchedule(schedule, classes, maxRoomSize, timeSlots, studentSchedules, profSchedules, whoPrefers, taken_time_room_combos, notAddedDict, backwardsRooms = True):
     holdClass = ds.LinkedList()
     room_count = 0
-    
     for room in maxRoomSize:
         for time in timeSlots:
             if (time, room.id) in taken_time_room_combos:
@@ -253,6 +260,7 @@ def miniSchedule(schedule, classes, maxRoomSize, timeSlots, studentSchedules, pr
             infiniteLoopCount = 0
             sizeOfClassesList = classes[room.domain.id].size
             while profSchedules[clss.professor.id].contains(time):
+                print(f"prof conflict: {time} clss {clss.name} - {clss.id} prof {clss.professor.id} {profSchedules[clss.professor.id]}")
 
                 if classes[room.domain.id].isEmpty():
                     infiniteLoopOption = True
@@ -280,9 +288,10 @@ def miniSchedule(schedule, classes, maxRoomSize, timeSlots, studentSchedules, pr
                 infiniteLoopCount += 1
 
             if skipTime == True:
+                print("skipTime")
                 classes[room.domain.id] = holdClass
                 continue
-
+            print("made it")
             if clss.name in notAddedDict:
                 notAddedDict.pop(clss.name)
 
@@ -575,11 +584,11 @@ def conflictSchedule(room_schedule, whoPrefers, studentSchedules, profSchedules)
             room_schedule[maxSwpIndex].enrolled = maxSwpStu[1]
 
             #edit professors' schedules to hold new times, get rid of old times
-            profSchedules[room_schedule[time].professor].remove(time)
-            profSchedules[room_schedule[time].professor].append(maxSwpIndex)
+            profSchedules[room_schedule[time].professor.id].remove(time)
+            profSchedules[room_schedule[time].professor.id].append(maxSwpIndex)
 
-            profSchedules[room_schedule[maxSwpIndex].professor].remove(maxSwpIndex)
-            profSchedules[room_schedule[maxSwpIndex].professor].append(time)
+            profSchedules[room_schedule[maxSwpIndex].professor.id].remove(maxSwpIndex)
+            profSchedules[room_schedule[maxSwpIndex].professor.id].append(time)
 
             #edit enrolled students' schedules to reflect new times
             for student in room_schedule[time].enrolled:
@@ -614,7 +623,7 @@ def classSchedule(constraints_filename, students_filename):
         times -- list of timeslots
         majors -- list of valid majors
     '''
-    numTimeSlots, maxRoomSize, classes, numClasses, classArr, majors = parseConstraints(constraints_filename)
+    numTimeSlots, maxRoomSize, classes, numClasses, classArr, majors, numProfessors = parseConstraints(constraints_filename)
     # mergeSort(maxRoomSize, 0)
     # initialize preferred students and Class ranked lists
     studentPrefLists, whoPrefers, esems, access_classes, access_esems = classQ(students_filename, classes, majors, classArr) # if this still messes w/things, have it as numClasses instead
@@ -622,7 +631,7 @@ def classSchedule(constraints_filename, students_filename):
 
     # innit student's schedules
     studentSchedules = generateSchedules(len(studentPrefLists))
-    profSchedules = generateSchedules(int(numClasses / 2))
+    profSchedules = generateSchedules(numProfessors)
 
     schedule = []
 
@@ -636,10 +645,13 @@ def classSchedule(constraints_filename, students_filename):
     taken_time_room_combos = accessibleSchedule(schedule, maxRoomSize, numTimeSlots,
                                                 access_classes, access_esems, whoPrefers, 
                                                 studentSchedules, profSchedules, notAddedDict)
+    
+    print("esems")
     #schedule esems for 0 time slot
     schedule = miniSchedule(schedule, esems, maxRoomSize, [0], 
                                                 studentSchedules, profSchedules, 
                                                 whoPrefers, taken_time_room_combos, notAddedDict)
+    print("classes")
     #0 non-accomodations classes for all other time slots
     schedule= miniSchedule(schedule, classes, maxRoomSize, range(numTimeSlots)[1:],
                                                 studentSchedules, profSchedules, 
@@ -657,6 +669,8 @@ def main():
         user_prefs_file = sys.argv[2]
     else:
         sys.exit("Usage: RP_bmc.py <constriants.txt> <student_prefs.txt>")
+
+    # parseConstraints(user_consts_file)
         
     start = float(datetime.datetime.now().microsecond / 1000.0)
     schedule, globalStudentCount, score, notAddedDict, totalStudents, ss = classSchedule(user_consts_file, user_prefs_file)
@@ -670,7 +684,7 @@ def main():
     print(f"Percent Assigned: {score}")
     print(f"# of Assigned Students: {globalStudentCount}\t Total Possible Assignments: {totalStudents}")
     print(f"Time (milli): {(end-start)}")
-    print(notAddedDict)
+    # print(notAddedDict)
 
     file.close()
 main()
