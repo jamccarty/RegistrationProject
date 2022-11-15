@@ -8,12 +8,23 @@ A popularity-based algorithm with conflict rescheduling designed to intake:
 and return a valid schedule of classes and their associated enrolled students.
 
 # run.sh
+location: ./scripts/
 usage: bash run.sh (DIRECTORY)
 use a directory with 10 base (no mods) files. Runs RP and is_valid 
+Must be run within ./scripts/ directory
 
 # run2.sh
+location: ./scripts/
 usage: bash run2.sh (DIRECTORY)
 use a directory with 10 mod or base files. Runs RP2 and is_valid2
+Must be run within ./scripts/ directory
+
+# run_bmc.sh
+location: ./scripts/
+usage: bash run_bmc.sh (DIRECTORY)
+Generates 10 schedules for each semester file of real-life Bryn Mawr data. Exports runtimes and fits to file ./scripts/testing.txt
+Must be run within the ./scripts/ directory
+
 # Generating random data
 make_random_input.pl has been modified to add additional data for our constraints
 For the original file, see base_make_random_input.pl
