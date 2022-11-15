@@ -217,7 +217,7 @@ def studentsArray(studentsFilename, majors, classes):
     # print(numAccomodations)
     return students
 
-def accessibleSchedule(schedule, rooms, numTimes, access_classes, access_esems, whoPrefers, student_schedules, prof_schedules, notAddedDict):
+def accessibleSchedule(schedule, rooms, numTimes, access_classes, access_esems, whoPrefers, student_schedules, prof_schedules, notAddedDict, numEsems):
     access_rooms = []
     for i in range(len(access_classes)):
         access_classes[i] = ds.arrayToLinkedList(access_classes[i])
@@ -237,24 +237,29 @@ def accessibleSchedule(schedule, rooms, numTimes, access_classes, access_esems, 
                 accessnum1 += 1
         if r.accessible == True:
             access_rooms.append(r)
-    print(f"rooms in domain 0: {num0}, {accessnum0} accessible. rooms in domain 1 {num1}, {accessnum1} accessible")
+    # print(f"rooms in domain 0: {num0}, {accessnum0} accessible. rooms in domain 1 {num1}, {accessnum1} accessible")
 
     mergeSort(access_rooms, 1)
 
     taken_time_room_combos = []
-
-    schedule = miniSchedule(schedule, access_esems, access_rooms, [0], 
+    if numEsems == 0:
+        schedule= miniSchedule(schedule, access_classes, access_rooms, range(numTimes), 
                                                 student_schedules, prof_schedules, 
                                                 whoPrefers, taken_time_room_combos, notAddedDict, backwardsRooms = True, accessibleDomains = [accessnum0, accessnum1])
-    # mech.printRoomArray(access_rooms)
-    schedule= miniSchedule(schedule, access_classes, access_rooms, range(numTimes)[1:], 
-                                                student_schedules, prof_schedules, 
-                                                whoPrefers, taken_time_room_combos, notAddedDict, backwardsRooms = True, accessibleDomains = [accessnum0, accessnum1])
+    else:
+        schedule = miniSchedule(schedule, access_esems, access_rooms, [0], 
+                                                    student_schedules, prof_schedules, 
+                                                    whoPrefers, taken_time_room_combos, notAddedDict, backwardsRooms = True, accessibleDomains = [accessnum0, accessnum1])
+        # mech.printRoomArray(access_rooms)
+        schedule= miniSchedule(schedule, access_classes, access_rooms, range(numTimes)[1:], 
+                                                    student_schedules, prof_schedules, 
+                                                    whoPrefers, taken_time_room_combos, notAddedDict, backwardsRooms = True, accessibleDomains = [accessnum0, accessnum1])
 
     return taken_time_room_combos
 
-def miniSchedule(schedule, classes, maxRoomSize, timeSlots, studentSchedules, profSchedules, whoPrefers, taken_time_room_combos, notAddedDict, backwardsRooms = True, accessibleDomains = [0, 0]):
-    print(f"domain 0: {classes[0].size}, domain 1: {classes[1].size}")
+def miniSchedule(schedule, classes, maxRoomSize, timeSlots, studentSchedules, profSchedules, whoPrefers, taken_time_room_combos, notAddedDict, backwardsRooms = False, accessibleDomains = [0, 0]):
+    # print(backwardsRooms)
+    # print(f"domain 0: {classes[0].size}, domain 1: {classes[1].size}")
     holdClass = ds.LinkedList()
     room_count = 0
     time_count = 0
@@ -274,6 +279,7 @@ def miniSchedule(schedule, classes, maxRoomSize, timeSlots, studentSchedules, pr
                 # i don't think len(classes) should be 2 so let me fix that and by fix that i mean throw a var in and pray it fixes shit
                 # i have no fucking clue if this works
                 if clss.preferredStudents > room.capacity and classes[clss.domain.id].size <= accessibleDomains[clss.domain.id] * (len(timeSlots) - time_count):
+                    # print(f"hey", clss.preferredStudents, room.capacity)
                     classes[room.domain.id].prepend(clss)
                     time_count += 1
                     continue
@@ -338,6 +344,15 @@ def miniSchedule(schedule, classes, maxRoomSize, timeSlots, studentSchedules, pr
         room_count += 1
         for r in maxRoomSize[:room_count]:
             conflictSchedule(schedule[r.id - 1], whoPrefers, studentSchedules, profSchedules)
+
+        if backwardsRooms == True and (not classes[0].isEmpty() or not classes[1].isEmpty()):
+            # print(classes[0].size, classes[1].size)
+            while not classes[0].isEmpty():
+                clss = classes[0].popFront()
+                notAddedDict.update({clss.name : 'not enough accessible classes in domain 0'})
+            while not classes[1].isEmpty():
+                clss = classes[1].popFront()
+                notAddedDict.update({clss.name : 'not enough accessible classes in domain 1'})
 
     return schedule
 
@@ -662,20 +677,28 @@ def classSchedule(constraints_filename, students_filename):
         for t in range(numTimeSlots):
             schedule[r].append(None) 
 
+    numEsems = len(access_esems[0]) + len(access_esems[1]) + esems[0].size + esems[1].size
+
     notAddedDict = {} #dictionary of reasons for why each unadded class went unadded
 
     taken_time_room_combos = accessibleSchedule(schedule, maxRoomSize, numTimeSlots,
                                                 access_classes, access_esems, whoPrefers, 
-                                                studentSchedules, profSchedules, notAddedDict)
+                                                studentSchedules, profSchedules, notAddedDict, numEsems)
     
-    #schedule esems for 0 time slot
-    schedule = miniSchedule(schedule, esems, maxRoomSize, [0], 
-                                                studentSchedules, profSchedules, 
-                                                whoPrefers, taken_time_room_combos, notAddedDict)
-    #0 non-accomodations classes for all other time slots
-    schedule= miniSchedule(schedule, classes, maxRoomSize, range(numTimeSlots)[1:],
-                                                studentSchedules, profSchedules, 
-                                                whoPrefers, taken_time_room_combos, notAddedDict)
+    if numEsems == 0:
+        #0 non-accomodations classes for all other time slots
+        schedule= miniSchedule(schedule, classes, maxRoomSize, range(numTimeSlots),
+                                                    studentSchedules, profSchedules, 
+                                                    whoPrefers, taken_time_room_combos, notAddedDict)
+    else:
+        #schedule esems for 0 time slot
+        schedule = miniSchedule(schedule, esems, maxRoomSize, [0], 
+                                                    studentSchedules, profSchedules, 
+                                                    whoPrefers, taken_time_room_combos, notAddedDict)
+        #0 non-accomodations classes for all other time slots
+        schedule= miniSchedule(schedule, classes, maxRoomSize, range(numTimeSlots)[1:],
+                                                    studentSchedules, profSchedules, 
+                                                    whoPrefers, taken_time_room_combos, notAddedDict)
  
     return schedule, globalStudentCount2, globalStudentCount2 / ((len(studentPrefLists) - 1) * 4), notAddedDict, (len(studentPrefLists) - 1)*4, studentSchedules
 
@@ -703,9 +726,12 @@ for time in schedule:
             # file.write(bytes(f"{clss}\n", "UTF-8"))
             file.write(bytes(f"{clss.name}\t{clss.room}\t{clss.professor.id}\t{clss.time}\t{enrolled_ls}\n", "UTF-8"))
 
-print(f"Percent Assigned: {score}")
-print(f"# of Assigned Students: {globalStudentCount}\t Total Possible Assignments: {totalStudents}")
-print(f"Time (milli): {(end-start)}")
-print(notAddedDict)
+# print(f"Percent Assigned: {score}")
+# print(f"# of Assigned Students: {globalStudentCount}\t Total Possible Assignments: {totalStudents}")
+# print(f"Time (milli): {(end-start)}")
+
+# print(f"{score}")
+print(f"{(end-start)}")
+# print(notAddedDict)
 
 file.close()
