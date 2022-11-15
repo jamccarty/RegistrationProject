@@ -65,13 +65,12 @@ open (CONSTRAINT, ">> $constraintfile") || die "Can't open file: $constraintfile
 
 print CONSTRAINT "Class Times\t$numslots\n";
 print CONSTRAINT "Rooms\t$numrooms\n";
+my $assigndomain = 0;
 foreach my $room ((1..$numrooms)) {
 	my $newval = rand();  # gives a random value between 0 and 1
 	my $roomcap = floor($newval * ($maxroomcapacity - $minroomcapacity) + $minroomcapacity);  # room capacity between 10 and 100
 	#add a room domain based on A, B, and C domains (evenly distributed)
-	my $numindom = int($nummajors / 3);
 	my $roomdomain = "";
-	my $assigndomain = int(rand(3));
 	if($assigndomain == 0){
 		$roomdomain = "A";
 	}
@@ -80,6 +79,10 @@ foreach my $room ((1..$numrooms)) {
 	}
 	else{
 		$roomdomain = "C";
+	}
+	$assigndomain++;
+	if($assigndomain > 2){
+		$assigndomain = 0;
 	}
 	#add a classroom accessibility value (50% accessible classrooms)
 	my $accessv = int(rand(2));

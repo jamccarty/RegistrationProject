@@ -1,14 +1,14 @@
 Class Times	40
 Rooms	10
 1	23	C	0
-2	15	C	1
+2	15	B	1
 3	62	C	1
 4	53	A	1
 5	27	C	0
 6	10	C	1
 7	45	A	1
 8	43	C	1
-9	81	A	0
+9	81	B	0
 10	15	A	1
 Classes	50
 Teachers	25
