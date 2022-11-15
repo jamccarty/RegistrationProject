@@ -23,6 +23,12 @@ Must be run within ./scripts/ directory
 location: ./scripts/
 usage: bash run_bmc.sh (DIRECTORY)
 Generates 10 schedules for each semester file of real-life Bryn Mawr data. Exports runtimes and fits to file ./scripts/testing.txt
+Must be run within the ./scripts/ directory. Assumes inputted timeslots are overlapping.
+
+# run_sections.sh
+location: ./scripts/
+usage: bash run_sections.sh (DIRECTORY)
+Generates 10 schedules for each semester file of real-life Bryn Mawr data, with multiple sections for some classes. Exports runtimes and fits to file ./scripts/testing.txt. Assumes standardized 10 nonoverlapping timeslots rather than inputted timeslots.
 Must be run within the ./scripts/ directory
 
 # Generating random data
