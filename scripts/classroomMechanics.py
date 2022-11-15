@@ -2,12 +2,13 @@ import re
 import DataStructures as ds
 
 class Student:
-    def __init__(self, id, year, major, preferredClassMajor, accomodations):
+    def __init__(self, id, year, major, preferredClassMajor, accomodations, name=-1):
         self.id = id
         self.year = year
         self.major = major
         self.prefMajor = preferredClassMajor
         self.accomodations = accomodations
+        self.name = name
 
     def __lt__(self, other):
         if self.major == other.major:
@@ -60,7 +61,10 @@ class Student:
         return self < other or self == other
 
     def __str__(self):
-        return f"{self.id}"
+        if self.name == -1:
+            return f"{self.id}"
+        else:
+            return f"{self.name}"
 
 class Class:
     def __init__(self, class_name, requiredProfessor, majorContributedTo, domainCanBeTaughtIn, isEsem, id=-1):
