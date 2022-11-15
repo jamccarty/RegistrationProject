@@ -273,22 +273,3 @@ def printRoomArray(arr):
         else:
             print(f"None ", end="")
     print("]")
-# year3NonMajor1 = Student(1, 3, 1, 3) #id, class year, major preferredClassMajor
-# year3NonMajor2 = Student(2, 3, 2, 3)
-# year3Major = Student(3, 3, 3, 3)
-# year2Major = Student(5, 2, 3, 3)
-# year4NonMajor = Student(4, 2, 4, 3) #higher year
-
-# print(f"year3Major > year2Major: {year3Major > year2Major}")
-# print(f"year3Major < year2Major: {year3Major < year2Major}")
-# print(f"year3Major == year2Major: {year3Major == year2Major}")
-# print(f"year3Major != year2Major: {year3Major != year2Major}")
-# print(f"year2Major > year4NonMajor: {year3Major > year2Major}")
-# print(f"year2Major < year4NonMajor: {year3Major < year2Major}")
-# print(f"year2Major == year4NonMajor: {year3Major == year2Major}")
-# print(f"year2Major != year4NonMajor: {year3Major != year2Major}")
-# print(f"year3NonMajor1 > year3NonMajor2: {year3NonMajor1 > year3NonMajor2}")
-# print(f"year3NonMajor1 < year3NonMajor2: {year3NonMajor1 < year3NonMajor2}")
-# print(f"year3NonMajor1 == year3NonMajor2: {year3NonMajor1 == year3NonMajor2}")
-# print(f"year3NonMajor1 != year3NonMajor2: {year3NonMajor1 != year3NonMajor2}")
-

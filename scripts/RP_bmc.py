@@ -1,4 +1,5 @@
 import pandas as pd
+import time
 import datetime
 import re
 import DataStructures as ds
@@ -394,20 +395,24 @@ def classQ(studentsFilename, classes, majors, numClasses, class_id_dict):
             major = max_major[0]
 
         for pref in preferences:
-            pref_id = class_id_dict[pref]
-            whoPrefers[pref_id].append(mech.Student(id, year, major, pref, accomodations))
-            if accomodations == True and not tempClasses[pref_id] is None:
-                d = tempClasses[pref_id].domain.id
-                # tempClasses[pref].needsAccessibility = True
-                if tempClasses[pref_id].isEsem == True:
-                    access_esems[d].append(tempClasses[pref_id])
-                    esems[d][pref_id] = None
-                    classes[d][pref_id] = None
-                else:
-                    access_classes[d].append(tempClasses[pref_id])
-                    classes[d][pref_id] = None
-                    esems[d][pref_id] = None
-                tempClasses[pref_id] = None #no longer in tempClasses list -- in classes that need accessibility
+            # print(class_id_dict)
+            # print(pref)
+            # account for if student requrests a Haverford class (which is not in our class_id_dict)
+            if pref in class_id_dict:
+                pref_id = class_id_dict[pref] # "trying to acess s/t it can't" or other  
+                whoPrefers[pref_id].append(mech.Student(id, year, major, pref, accomodations))
+                if accomodations == True and not tempClasses[pref_id] is None:
+                    d = tempClasses[pref_id].domain.id
+                    # tempClasses[pref].needsAccessibility = True
+                    if tempClasses[pref_id].isEsem == True:
+                        access_esems[d].append(tempClasses[pref_id])
+                        esems[d][pref_id] = None
+                        classes[d][pref_id] = None
+                    else:
+                        access_classes[d].append(tempClasses[pref_id])
+                        classes[d][pref_id] = None
+                        esems[d][pref_id] = None
+                    tempClasses[pref_id] = None #no longer in tempClasses list -- in classes that need accessibility
     count = 0
     for clss in tempClasses:
         count += 1
@@ -658,32 +663,33 @@ def classSchedule(constraints_filename, students_filename):
  
     return schedule, globalStudentCount2, globalStudentCount2 / ((len(studentPrefLists) - 1) * 4), notAddedDict, (len(studentPrefLists) - 1)*4, studentSchedules
 
-def main():
-    file = open("bmc_output.txt", "wb")
-    file.write(bytes("Course\tRoom\tTeacher\tTime\tStudents\n", "UTF-8"))
-    user_consts_file = ""
-    user_prefs_file =  ""
-    if len(sys.argv) >= 2:
-        user_consts_file = sys.argv[1]
-        user_prefs_file = sys.argv[2]
-    else:
-        sys.exit("Usage: RP_bmc.py <constriants.txt> <student_prefs.txt>")
 
-    # parseConstraints(user_consts_file)
+file = open("bmc_output.txt", "wb")
+file.write(bytes("Course\tRoom\tTeacher\tTime\tStudents\n", "UTF-8"))
+user_consts_file = ""
+user_prefs_file =  ""
+if len(sys.argv) >= 2:
+    user_consts_file = sys.argv[1]
+    user_prefs_file = sys.argv[2]
+else:
+    sys.exit("Usage: RP_bmc.py <constriants.txt> <student_prefs.txt>")
+
+ # parseConstraints(user_consts_file)
         
-    start = float(datetime.datetime.now().microsecond / 1000.0)
-    schedule, globalStudentCount, score, notAddedDict, totalStudents, ss = classSchedule(user_consts_file, user_prefs_file)
-    end = float(datetime.datetime.now().microsecond / 1000.0)
+start = time.time() * 1000 
+schedule, globalStudentCount, score, notAddedDict, totalStudents, ss = classSchedule(user_consts_file, user_prefs_file)
+end = time.time() * 1000
 
-    for time in schedule:
-        for clss in time:
-            if not clss is None:
-                file.write(bytes(f"{clss}\n", "UTF-8"))
+for time in schedule:
+    for clss in time:
+        if not clss is None:
+            enrolled_ls = " ".join(str(x) for x in clss.enrolled)
+            # file.write(bytes(f"{clss}\n", "UTF-8"))
+            file.write(bytes(f"{clss.name}\t{clss.room}\t{clss.professor.id}\t{clss.time}\t{enrolled_ls}\n", "UTF-8"))
 
-    print(f"Percent Assigned: {score}")
-    print(f"# of Assigned Students: {globalStudentCount}\t Total Possible Assignments: {totalStudents}")
-    print(f"Time (milli): {(end-start)}")
-    # print(notAddedDict)
+print(f"Percent Assigned: {score}")
+print(f"# of Assigned Students: {globalStudentCount}\t Total Possible Assignments: {totalStudents}")
+print(f"Time (milli): {(end-start)}")
+# print(notAddedDict)
 
-    file.close()
-main()
+file.close()
