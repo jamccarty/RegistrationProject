@@ -1,5 +1,5 @@
 # RegistrationProject
-A pupularity-based algorithm with conflict rescheduling designed to intake:
+A popularity-based algorithm with conflict rescheduling designed to intake:
   - a set of student preferences for s students
   - a set of c classes and p professors (assumes each professor can teach 2 classes and that c = 2p)
   - a set of t non overlapping time slots
