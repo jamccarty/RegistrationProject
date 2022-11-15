@@ -185,6 +185,7 @@ def studentsArray(studentsFilename, majors, classes):
     students.append([]) #for 0 student
     i = 0
     # fill students
+    numAccomodations = 0
     for line in lines:
         i += 1
         if line == "":
@@ -200,9 +201,9 @@ def studentsArray(studentsFilename, majors, classes):
         accessible = random.randrange(0,100)
         if accessible == 0:
             accomodations = True
+            numAccomodations += 1
         else: 
             accomodations = False 
-
         pref = line_pref.split(' ') #parse preferences
 
         if len(pref) == 0:
@@ -212,6 +213,7 @@ def studentsArray(studentsFilename, majors, classes):
         students.append((i, year, major, preferences_integers, accomodations, int(parts[0])))
 
     file.close()
+    # print(numAccomodations)
     return students
 
 def accessibleSchedule(schedule, rooms, numTimes, access_classes, access_esems, whoPrefers, student_schedules, prof_schedules, notAddedDict):
@@ -231,7 +233,7 @@ def accessibleSchedule(schedule, rooms, numTimes, access_classes, access_esems, 
     schedule = miniSchedule(schedule, access_esems, access_rooms, [0], 
                                                 student_schedules, prof_schedules, 
                                                 whoPrefers, taken_time_room_combos, notAddedDict)
-    mech.printRoomArray(access_rooms)
+    # mech.printRoomArray(access_rooms)
     schedule= miniSchedule(schedule, access_classes, access_rooms, range(numTimes)[1:], 
                                                 student_schedules, prof_schedules, 
                                                 whoPrefers, taken_time_room_combos, notAddedDict, backwardsRooms = True)
@@ -372,6 +374,9 @@ def classQ(studentsFilename, classes, majors, numClasses, class_id_dict):
         i += 1
         majors_student = []
         for pref in preferences:
+            if pref not in class_id_dict:
+                studentPreferences[id][3].remove(pref)
+                continue
             pref_id = class_id_dict[pref]
             clss = classes[0][pref_id]
             if clss is None:
