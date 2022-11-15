@@ -152,9 +152,11 @@ def accessibleSchedule(schedule, rooms, numTimes, access_classes, access_esems, 
         access_classes[i] = ds.arrayToLinkedList(access_classes[i])
         access_esems[i] = ds.arrayToLinkedList(access_esems[i])
 
+    access_nums = [0, 0, 0]
     for r in rooms:
         if r.accessible == True:
             access_rooms.append(r)
+            access_nums[r.domain.id] += 1
 
     mergeSort(access_rooms, 1)
 
@@ -162,7 +164,7 @@ def accessibleSchedule(schedule, rooms, numTimes, access_classes, access_esems, 
 
     schedule = miniSchedule(schedule, access_esems, access_rooms, [0], 
                                                 student_schedules, prof_schedules, 
-                                                whoPrefers, taken_time_room_combos, notAddedDict, backwardsRooms=True)
+                                                whoPrefers, taken_time_room_combos, notAddedDict, backwardsRooms=True, accessibleDomains = access_nums)
 
     # for domain in range(len(access_esems)):
     #     for c in access_esems[domain]:
@@ -192,7 +194,7 @@ def accessibleSchedule(schedule, rooms, numTimes, access_classes, access_esems, 
 
     schedule= miniSchedule(schedule, access_classes, access_rooms, range(numTimes)[1:], 
                                                 student_schedules, prof_schedules, 
-                                                whoPrefers, taken_time_room_combos, notAddedDict, backwardsRooms=True)
+                                                whoPrefers, taken_time_room_combos, notAddedDict, backwardsRooms=True, accessibleDomains = access_nums)
 
     return taken_time_room_combos
 
@@ -360,7 +362,7 @@ def mergeSort(arr, dir):
             k += 1
  
 
-def miniSchedule(schedule, classes, maxRoomSize, timeSlots, studentSchedules, profSchedules, whoPrefers, taken_time_room_combos, notAddedDict, backwardsRooms = False):
+def miniSchedule(schedule, classes, maxRoomSize, timeSlots, studentSchedules, profSchedules, whoPrefers, taken_time_room_combos, notAddedDict, backwardsRooms = False, accessibleDomains = [-1, -1, -1]):
     holdClass = ds.LinkedList()
     room_count = 0
     
@@ -377,9 +379,10 @@ def miniSchedule(schedule, classes, maxRoomSize, timeSlots, studentSchedules, pr
             if clss.name == 0:
                 continue
 
-            if backwardsRooms:
-                if clss.preferredStudents > room.capacity and classes.size <= len(maxRoomSize):
+            if backwardsRooms == True:
+                if clss.preferredStudents > room.capacity and classes[clss.domain.id].size <= accessibleDomains[clss.domain.id] * (len(timeSlots) - time_count):
                     classes[room.domain.id].prepend(clss)
+                    time_count += 1
                     continue
             infiniteLoopOption = False
             infiniteLoopCount = 0

@@ -8,7 +8,7 @@ import sys
 import random
 
 # STEM ID == 0, HUM (humanities) ID == 1
-stem_majors = ["MATH","PSYC","BIOL","PHYS","CMSC","GEOL","ECON"]
+stem_majors = ["MATH","PSYC","BIOL","PHYS","CMSC","GEOL","ECON", "CHEM"]
 accesible_buildings = ["CAN", "CARP","DAL","GO","PK",]
 globalStudentCount2 = 0
 
@@ -224,14 +224,20 @@ def accessibleSchedule(schedule, rooms, numTimes, access_classes, access_esems, 
         access_esems[i] = ds.arrayToLinkedList(access_esems[i])
     num0 = 0
     num1 = 0
+    accessnum0 = 0
+    accessnum1 = 0
     for r in rooms:
         if r.domain.id == 0:
             num0+=1
+            if r.accessible == True:
+                accessnum0 += 1
         elif r.domain.id == 1:
             num1+=1
+            if r.accessible == True:
+                accessnum1 += 1
         if r.accessible == True:
             access_rooms.append(r)
-    print(f"rooms in domain 0: {num0} rooms in domain 1 {num1}")
+    print(f"rooms in domain 0: {num0}, {accessnum0} accessible. rooms in domain 1 {num1}, {accessnum1} accessible")
 
     mergeSort(access_rooms, 1)
 
@@ -239,18 +245,19 @@ def accessibleSchedule(schedule, rooms, numTimes, access_classes, access_esems, 
 
     schedule = miniSchedule(schedule, access_esems, access_rooms, [0], 
                                                 student_schedules, prof_schedules, 
-                                                whoPrefers, taken_time_room_combos, notAddedDict)
+                                                whoPrefers, taken_time_room_combos, notAddedDict, backwardsRooms = True, accessibleDomains = [accessnum0, accessnum1])
     # mech.printRoomArray(access_rooms)
     schedule= miniSchedule(schedule, access_classes, access_rooms, range(numTimes)[1:], 
                                                 student_schedules, prof_schedules, 
-                                                whoPrefers, taken_time_room_combos, notAddedDict, backwardsRooms = True)
+                                                whoPrefers, taken_time_room_combos, notAddedDict, backwardsRooms = True, accessibleDomains = [accessnum0, accessnum1])
 
     return taken_time_room_combos
 
-def miniSchedule(schedule, classes, maxRoomSize, timeSlots, studentSchedules, profSchedules, whoPrefers, taken_time_room_combos, notAddedDict, backwardsRooms = True):
+def miniSchedule(schedule, classes, maxRoomSize, timeSlots, studentSchedules, profSchedules, whoPrefers, taken_time_room_combos, notAddedDict, backwardsRooms = True, accessibleDomains = [0, 0]):
     print(f"domain 0: {classes[0].size}, domain 1: {classes[1].size}")
     holdClass = ds.LinkedList()
     room_count = 0
+    time_count = 0
     for room in maxRoomSize:
         for time in timeSlots:
             if (time, room.id) in taken_time_room_combos:
@@ -266,8 +273,9 @@ def miniSchedule(schedule, classes, maxRoomSize, timeSlots, studentSchedules, pr
             if backwardsRooms == True:
                 # i don't think len(classes) should be 2 so let me fix that and by fix that i mean throw a var in and pray it fixes shit
                 # i have no fucking clue if this works
-                if clss.preferredStudents > room.capacity and len(classes) <= len(maxRoomSize):
+                if clss.preferredStudents > room.capacity and classes[clss.domain.id].size <= accessibleDomains[clss.domain.id] * (len(timeSlots) - time_count):
                     classes[room.domain.id].prepend(clss)
+                    time_count += 1
                     continue
             infiniteLoopOption = False
             infiniteLoopCount = 0
@@ -302,6 +310,7 @@ def miniSchedule(schedule, classes, maxRoomSize, timeSlots, studentSchedules, pr
 
             if skipTime == True:
                 classes[room.domain.id] = holdClass
+                time_count += 1
                 continue
             if clss.name in notAddedDict:
                 notAddedDict.pop(clss.name)
@@ -325,7 +334,7 @@ def miniSchedule(schedule, classes, maxRoomSize, timeSlots, studentSchedules, pr
             clss.time = time
             schedule[clss.room.id - 1][time] = clss
             taken_time_room_combos.append((time, room.id))
-
+            time_count += 1
         room_count += 1
         for r in maxRoomSize[:room_count]:
             conflictSchedule(schedule[r.id - 1], whoPrefers, studentSchedules, profSchedules)
