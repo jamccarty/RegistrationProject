@@ -150,8 +150,8 @@ def get_class_times(list_of_dicts):
 
 def write_building_to_file(list_of_dicts, filename):
     building = get_building(list_of_dicts)
-    f = open(filename, 'w')
-    f.write("Building\t" + str(len(building)) + "\n")
+    f = open(filename, 'wb')
+    f.write(bytes("Building\t" + str(len(building)) + "\n","UTF-8"))
     for subject in building:
         towrite = subject + "\t"
         for room in building[subject]:
@@ -161,32 +161,32 @@ def write_building_to_file(list_of_dicts, filename):
 
 def write_prefs_to_file(list_of_dicts, filename):
   student_prefs = get_student_prefs_enrolled(list_of_dicts)
-  f = open(filename, 'w')
-  f.write("Students\t" + str(len(student_prefs)) + "\n")
+  f = open(filename, 'wb')
+  f.write(bytes("Students\t" + str(len(student_prefs)) + "\n", "UTF-8"))
   for student in student_prefs:
     towrite = student + "\t"
     for course in student_prefs[student]:
       towrite = towrite + course + " "
     towrite = towrite + "\n"
-    f.write(towrite)
+    f.write(bytes(towrite,"UTF-8"))
 
 def write_class_times_to_file(list_of_dicts, f):
   class_times = get_class_times(list_of_dicts)
-  f.write("Class Times\t" + str(len(class_times)) + "\n")
+  f.write(bytes("Class Times\t" + str(len(class_times)) + "\n", "UTF-8"))
   i = 1
   for (start, end, days) in class_times:
-    f.write(str(i) + "\t" + start + " " + end + " " + days + "\n")
+    f.write(bytes(str(i) + "\t" + start + " " + end + " " + days + "\n", "UTF-8"))
     i = i + 1
 
 def write_rooms_to_file(list_of_dicts, f):
   room_capacities = get_room_sizes(list_of_dicts)
-  f.write("Rooms\t" + str(len(room_capacities)) + "\n")
+  f.write(bytes("Rooms\t" + str(len(room_capacities)) + "\n","UTF-8"))
   for room in room_capacities:
-    f.write(room + "\t" + str(room_capacities[room]) + "\n")
+    f.write(bytes(room + "\t" + str(room_capacities[room]) + "\n","UTF-8"))
 
 def write_num_classes_to_file(list_of_dicts, f):
   num_classes = len(get_courses(list_of_dicts))
-  f.write("Classes\t" + str(num_classes) + "\n")
+  f.write(bytes("Classes\t" + str(num_classes) + "\n","UTF-8"))
 
 def write_teachers_to_file(list_of_dicts, f):
   prof_courses = get_prof_courses(list_of_dicts)
@@ -194,17 +194,17 @@ def write_teachers_to_file(list_of_dicts, f):
   courses = get_courses(list_of_dicts)
   subject_level = get_subject_level(list_of_dicts)
   building = get_building(list_of_dicts)
-  f.write("Teachers\t" + str(num_profs) + "\n")
+  f.write(bytes("Teachers\t" + str(num_profs) + "\n","UTF-8"))
   for course in courses:
-    f.write(course + "\t")
-    f.write(courses[course]["Instructor ID"] + "\t")
-    f.write(subject_level[course][0] + "\t")
+    f.write(bytes(course + "\t","UTF-8"))
+    f.write(bytes(courses[course]["Instructor ID"] + "\t","UTF-8"))
+    f.write(bytes(subject_level[course][0] + "\t","UTF-8"))
     for b in building[subject_level[course][0]]:
-        f.write(b + "\t")
-    f.write("\n")
+        f.write(bytes(b + "\t","UTF-8"))
+    f.write(bytes("\n","UTF-8"))
 
 def write_constraints_to_file(list_of_dicts, filename):
-  f = open(filename, 'w')
+  f = open(filename, 'wb')
   write_class_times_to_file(list_of_dicts, f)
   write_rooms_to_file(list_of_dicts, f)
   write_num_classes_to_file(list_of_dicts, f)
